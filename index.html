@@ -202,7 +202,7 @@ table.data-table{width:100%;border-collapse:collapse;font-size:12px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycby46HyyxTXBewK1FkyRYbnYz1njAdbiZVT-rw6gfO9QX7MdvrY3Irxpg3UHI5FcCd4y/exec';
+const API = 'https://script.google.com/macros/s/AKfycbyLFXuPrpPnuSvRstkC-9-kw9dwlHDrzEL4P0eEUus8Bo74Qn8sx5T766IwDicJ9fmC/exec';
 
 // ── Estado global ────────────────────────────────────────────────
 let G = { clientes:[], proveedores:[], presupuestos:[], tareas:[], config:{}, estudio:{} };
@@ -602,17 +602,49 @@ function filterPresupuestos(){
 function drawerPresupuesto(id){
   const p=G.presupuestos.find(x=>String(x.id)===String(id));
   if(!p) return;
+  const estadoOpts = ['Borrador','Enviado','Aprobado','Rechazado']
+    .map(e=>`<option value="${e}"${e===p.estado?' selected':''}>${e}</option>`).join('');
+
   openDrawer(p.proyecto||p.numero,`
     <div style="margin-bottom:1.5rem;">
       <div style="font-size:18px;font-family:'Cormorant Garamond',serif;">${p.proyecto||'—'}</div>
-      <div style="font-size:12px;color:var(--muted);">Nº ${p.numero||'—'} · ${badgeEstado(p.estado)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">Nº ${p.numero||'—'}</div>
     </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--warm);border-bottom:1px solid var(--warm);margin-bottom:1rem;">
+      <span style="font-size:12px;color:var(--muted);min-width:60px;">Estado</span>
+      <select id="pres_estado_sel"
+        onchange="cambiarEstadoPresupuesto('${p.id}',this.value)"
+        style="font-family:'DM Mono',monospace;font-size:12px;padding:5px 10px;border:var(--border);border-radius:var(--radius);background:var(--cream);outline:none;cursor:pointer;flex:1;">
+        ${estadoOpts}
+      </select>
+      <span id="pres_estado_badge">${badgeEstado(p.estado)}</span>
+    </div>
+
     ${dr('Cliente',p.cliente_nombre)}${dr('Fecha',fmtFecha(p.fecha))}${dr('Validez',p.validez?p.validez+' días':'')}${dr('Forma de pago',p.forma_pago)}${dr('Total sin IVA',fmtN(p.total_sin_iva))}${dr('Total con IVA',fmtN(p.total_con_iva))}${dr('Fee estudio',p.fee?fmtN(p.fee):'')}
     <div style="display:flex;gap:8px;margin-top:1.5rem;flex-wrap:wrap;">
       <button class="btn btn-ghost btn-sm" onclick="cargarPresupuesto('${p.id}')">Editar</button>
       <button class="btn btn-ghost btn-sm" onclick="exportPresPDFGuardado('${p.id}')">PDF</button>
       <button class="btn btn-danger btn-sm" onclick="confirmarDeletePres('${p.id}')">Eliminar</button>
     </div>`);
+}
+
+async function cambiarEstadoPresupuesto(id, estado){
+  // Actualizar en estado local inmediatamente
+  const p = G.presupuestos.find(x=>String(x.id)===String(id));
+  if(!p) return;
+  p.estado = estado;
+
+  // Actualizar badge visualmente de inmediato
+  const badge = document.getElementById('pres_estado_badge');
+  if(badge) badge.innerHTML = badgeEstado(estado);
+
+  // Refrescar tabla de fondo inmediatamente (ya tenemos el dato en memoria)
+  if(document.getElementById('tbodyPres')) filterPresupuestos();
+
+  // Guardar en Sheets en segundo plano
+  await api('updatePresupuestoEstado',{id, estado});
+  toast('Estado actualizado');
 }
 
 async function confirmarDeletePres(id){
