@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laton Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#f8f5f0;--ink:#1c1a18;--gold:#b8974a;--gold-light:#e8dcc8;
+  --warm:#e2dbd0;--muted:#8a8278;--white:#fff;--border:1px solid #d8d0c4;--radius:3px;
+  --success-bg:#e6f5ee;--success:#1a6640;--warn-bg:#fef3e2;--warn:#7a4f00;
+  --danger-bg:#fdecea;--danger:#8b2020;--info-bg:#e8f0fe;--info:#1a4fd6;
+}
+body{font-family:'DM Mono',monospace;background:var(--cream);color:var(--ink);min-height:100vh;font-size:13px;}
+
+/* ── LAYOUT ── */
+.app{display:flex;flex-direction:column;min-height:100vh;}
+header{background:var(--ink);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:200;}
+.logo{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;letter-spacing:0.2em;color:#fff;}
+.logo em{color:var(--gold);font-style:normal;}
+.app-body{display:flex;flex:1;}
+nav{width:200px;background:var(--ink);min-height:calc(100vh - 54px);padding:1.5rem 0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;flex-shrink:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#aaa;cursor:pointer;font-size:12px;letter-spacing:0.05em;transition:all 0.15s;border-left:2px solid transparent;}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,0.05);}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(184,151,74,0.08);}
+.nav-icon{font-size:14px;width:18px;text-align:center;}
+.nav-section{font-size:9px;color:#555;letter-spacing:0.12em;text-transform:uppercase;padding:12px 20px 4px;}
+.content{flex:1;padding:2rem;max-width:1000px;}
+
+/* ── COMPONENTES ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);font-size:12px;font-family:'DM Mono',monospace;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-gold{background:var(--gold);color:#fff;}.btn-gold:hover{background:#a0832e;}
+.btn-ink{background:var(--ink);color:#fff;border:var(--border);}.btn-ink:hover{background:#333;}
+.btn-ghost{background:transparent;color:var(--ink);border:var(--border);}.btn-ghost:hover{background:var(--warm);}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid #f5c0c0;}.btn-danger:hover{background:var(--danger-bg);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+.card{background:var(--white);border:var(--border);border-radius:4px;padding:1.25rem;}
+.card-gold{border-top:3px solid var(--gold);}
+
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--ink);letter-spacing:0.05em;}
+
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.field label{font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+.field input,.field select,.field textarea{font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;border:var(--border);border-radius:var(--radius);background:var(--cream);color:var(--ink);outline:none;width:100%;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);background:var(--white);}
+.field textarea{resize:vertical;min-height:70px;line-height:1.6;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.full{grid-column:1/-1;}
+
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:400;}
+.badge-success{background:var(--success-bg);color:var(--success);}
+.badge-warn{background:var(--warn-bg);color:var(--warn);}
+.badge-danger{background:var(--danger-bg);color:var(--danger);}
+.badge-info{background:var(--info-bg);color:var(--info);}
+.badge-neutral{background:var(--warm);color:var(--muted);}
+
+.search-bar{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;}
+.search-bar input,.search-bar select{font-family:'DM Mono',monospace;font-size:13px;padding:7px 10px;border:var(--border);border-radius:var(--radius);background:var(--white);color:var(--ink);outline:none;}
+.search-bar input{flex:1;min-width:180px;}
+.search-bar input:focus,.search-bar select:focus{border-color:var(--gold);}
+
+/* ── GRID TARJETAS ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;}
+.item-card{background:var(--white);border:var(--border);border-radius:4px;padding:1rem 1.1rem;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;}
+.item-card:hover{border-color:#bbb;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.item-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;}
+.item-name{font-size:14px;font-weight:500;color:var(--ink);line-height:1.3;}
+.item-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.item-meta{font-size:12px;color:#666;display:flex;flex-direction:column;gap:4px;}
+.meta-row{display:flex;gap:6px;}
+.meta-lbl{min-width:64px;color:#bbb;font-size:11px;flex-shrink:0;}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;align-items:flex-start;justify-content:center;padding:2rem;overflow-y:auto;}
+.overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:6px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;}
+.modal-bar{background:var(--ink);color:#fff;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-radius:6px 6px 0 0;}
+.modal-bar h3{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;letter-spacing:0.08em;}
+.modal-body{padding:1.5rem;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;padding:0 1.5rem 1.5rem;}
+.close-x{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;}
+
+/* ── DRAWER DETALLE ── */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:250;}
+.drawer-overlay.open{display:block;}
+.drawer{position:fixed;top:0;right:-480px;width:480px;height:100vh;background:var(--white);z-index:260;transition:right 0.25s ease;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,0.12);}
+.drawer.open{right:0;}
+.drawer-bar{background:var(--ink);color:#fff;padding:1rem 1.5rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;}
+.drawer-bar h3{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:0.05em;flex:1;}
+.drawer-body{padding:1.5rem;}
+.detail-row{display:flex;padding:8px 0;border-top:1px solid var(--warm);gap:14px;}
+.detail-lbl{font-size:11px;color:var(--muted);min-width:100px;flex-shrink:0;padding-top:1px;}
+.detail-val{font-size:13px;color:var(--ink);flex:1;word-break:break-word;}
+.sec-title-sm{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--gold);margin:1rem 0 0.5rem;letter-spacing:0.05em;}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem;}
+.stat-card{background:var(--white);border:var(--border);border-radius:4px;padding:1rem;}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--ink);}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;}
+
+/* ── TABLA ── */
+.table-wrap{overflow-x:auto;}
+table.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{padding:6px 10px;background:var(--gold-light);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:400;text-align:left;white-space:nowrap;}
+.data-table td{padding:8px 10px;border-bottom:1px solid var(--warm);vertical-align:top;}
+.data-table tr:hover td{background:#fdfcfa;}
+
+/* ── KANBAN ── */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start;}
+.kanban-col{background:var(--cream);border:var(--border);border-radius:4px;padding:10px;}
+.kanban-col-title{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;padding:0 4px;}
+.kanban-card{background:var(--white);border:var(--border);border-radius:3px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;}
+.kanban-card:hover{border-color:#bbb;}
+.kanban-card-title{font-size:13px;color:var(--ink);margin-bottom:4px;font-weight:500;}
+.kanban-card-sub{font-size:11px;color:var(--muted);}
+.add-kanban{width:100%;background:transparent;border:1px dashed var(--warm);border-radius:3px;padding:7px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);cursor:pointer;margin-top:4px;}
+.add-kanban:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ── CONFIGURACIÓN ── */
+.config-section{margin-bottom:1.5rem;}
+.config-section h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+.config-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--warm);}
+.config-item span{flex:1;font-size:13px;}
+.config-item-edit{font-size:11px;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:2px 6px;}
+.config-item-edit:hover{color:var(--gold);}
+.config-item-del{font-size:14px;background:transparent;border:none;color:#ccc;cursor:pointer;padding:2px 4px;}
+.config-item-del:hover{color:var(--danger);}
+
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.empty-state p{font-size:13px;margin-top:8px;}
+
+.loading{text-align:center;padding:2rem;color:var(--muted);font-size:13px;}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--radius);font-size:12px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;border-left:3px solid var(--gold);}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">LATON <em>Studio</em></div>
+  <div style="font-size:11px;color:#555;letter-spacing:0.1em;">GESTIÓN INTERNA</div>
+</header>
+<div class="app-body">
+  <nav>
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">◈</span> Dashboard
+    </div>
+    <div class="nav-section">Módulos</div>
+    <div class="nav-item" onclick="showPage('clientes')" id="nav-clientes">
+      <span class="nav-icon">◎</span> Clientes
+    </div>
+    <div class="nav-item" onclick="showPage('presupuestos')" id="nav-presupuestos">
+      <span class="nav-icon">◻</span> Presupuestos
+    </div>
+    <div class="nav-item" onclick="showPage('proveedores')" id="nav-proveedores">
+      <span class="nav-icon">◇</span> Proveedores
+    </div>
+    <div class="nav-item" onclick="showPage('tareas')" id="nav-tareas">
+      <span class="nav-icon">◈</span> Tareas
+    </div>
+    <div class="nav-section">Sistema</div>
+    <div class="nav-item" onclick="showPage('configuracion')" id="nav-configuracion">
+      <span class="nav-icon">⊙</span> Configuración
+    </div>
+  </nav>
+  <div class="content" id="content">
+    <div class="loading">Cargando...</div>
+  </div>
+</div>
+</div>
+
+<!-- Drawer detalle -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-bar">
+    <h3 id="drawerTitle">Detalle</h3>
+    <button class="close-x" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<!-- Modal genérico -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-bar">
+      <h3 id="modalTitle">—</h3>
+      <button class="close-x" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycby46HyyxTXBewK1FkyRYbnYz1njAdbiZVT-rw6gfO9QX7MdvrY3Irxpg3UHI5FcCd4y/exec';
+
+// ── Estado global ────────────────────────────────────────────────
+let G = { clientes:[], proveedores:[], presupuestos:[], tareas:[], config:{}, estudio:{} };
+
+// ── API ──────────────────────────────────────────────────────────
+async function api(action, data){
+  try {
+    const res = await fetch(API, {method:'POST', body:JSON.stringify({action,...data})});
+    return await res.json();
+  } catch(e){ toast('Error de conexión'); return {error:e.message}; }
+}
+async function apiGet(action){
+  try {
+    const res = await fetch(API+'?action='+action);
+    return await res.json();
+  } catch(e){ toast('Error de conexión'); return {error:e.message}; }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+const fmt = v => (+v||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function initials(n){ return String(n||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+const COLORS=[{bg:'#e8f0fe',c:'#1a4fd6'},{bg:'#e6f5ee',c:'#1a6640'},{bg:'#fef3e2',c:'#7a4f00'},{bg:'#f0eaff',c:'#5b21b6'},{bg:'#fdecea',c:'#8b1f1f'},{bg:'#e8f8f5',c:'#0f6b5a'},{bg:'#fce8f3',c:'#831843'}];
+function colorFor(s){ let h=0; for(let c of String(s||'')) h=(h*31+c.charCodeAt(0))%COLORS.length; return COLORS[h]; }
+function cfgList(clave){ return (G.config[clave]||[]).map(x=>x.valor); }
+function selOpts(clave, selected=''){ return cfgList(clave).map(v=>`<option value="${v}"${v===selected?' selected':''}>${v}</option>`).join(''); }
+function badgeEstado(e){
+  const map={'Activo':'success','En curso':'success','Pendiente':'warn','Cerrado':'neutral','Borrador':'neutral','Alta':'danger','Normal':'warn','Baja':'neutral','Disponibilidad alta':'success','Plazo normal':'warn','Plazo largo':'danger'};
+  return `<span class="badge badge-${map[e]||'neutral'}">${e||'—'}</span>`;
+}
+
+// ── Navegación ───────────────────────────────────────────────────
+function showPage(page){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+page)?.classList.add('active');
+  const pages = {dashboard:renderDashboard, clientes:renderClientes, proveedores:renderProveedores, presupuestos:renderPresupuestos, tareas:renderTareas, configuracion:renderConfiguracion};
+  if(pages[page]) pages[page]();
+}
+
+// ── Drawer / Modal ───────────────────────────────────────────────
+function openDrawer(title, html){
+  document.getElementById('drawerTitle').textContent=title;
+  document.getElementById('drawerBody').innerHTML=html;
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+function openModal(title, bodyHtml, footerHtml=''){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=bodyHtml;
+  document.getElementById('modalFooter').innerHTML=footerHtml;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('drawerOverlay').addEventListener('click',closeDrawer);
+
+// ── DASHBOARD ────────────────────────────────────────────────────
+function renderDashboard(){
+  const c=document.getElementById('content');
+  const nCli=G.clientes.length, nProv=G.proveedores.length;
+  const nPres=G.presupuestos.length;
+  const nTar=G.tareas.filter(t=>t.estado!=='Cerrado').length;
+  const totalPres=G.presupuestos.reduce((a,p)=>a+(+p.total_con_iva||0),0);
+  c.innerHTML=`
+    <div class="page-header"><div class="page-title">Dashboard</div></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num">${nCli}</div><div class="stat-lbl">Clientes</div></div>
+      <div class="stat-card"><div class="stat-num">${nPres}</div><div class="stat-lbl">Presupuestos</div></div>
+      <div class="stat-card"><div class="stat-num">${nProv}</div><div class="stat-lbl">Proveedores</div></div>
+      <div class="stat-card"><div class="stat-num">${nTar}</div><div class="stat-lbl">Tareas activas</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="card card-gold">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Últimos clientes</div>
+        ${G.clientes.slice(-4).reverse().map(cl=>{const col=colorFor(cl.nombre);return`
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--warm);cursor:pointer;" onclick="showPage('clientes')">
+          <div class="avatar" style="width:30px;height:30px;font-size:11px;background:${col.bg};color:${col.c};">${initials(cl.nombre)}</div>
+          <div><div style="font-size:13px;">${cl.nombre}</div><div style="font-size:11px;color:var(--muted);">${cl.tipo||'—'}</div></div>
+        </div>`}).join('')||'<div style="color:var(--muted);font-size:12px;padding:8px 0;">Sin clientes aún</div>'}
+      </div>
+      <div class="card card-gold">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Tareas pendientes</div>
+        ${G.tareas.filter(t=>t.estado==='Pendiente').slice(0,4).map(t=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--warm);">
+          <div style="flex:1;font-size:13px;">${t.titulo}</div>
+          ${badgeEstado(t.prioridad||'Normal')}
+        </div>`).join('')||'<div style="color:var(--muted);font-size:12px;padding:8px 0;">Sin tareas pendientes</div>'}
+      </div>
+    </div>`;
+}
+
+// ── CLIENTES ─────────────────────────────────────────────────────
+function renderClientes(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+    <div class="page-header">
+      <div class="page-title">Clientes</div>
+      <button class="btn btn-gold" onclick="modalNuevoCliente()">+ Nuevo cliente</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchCli" placeholder="Buscar cliente..." oninput="filterClientes()">
+      <select id="filtTipo" onchange="filterClientes()"><option value="">Todos los tipos</option>${cfgList('tipo_cliente').map(v=>`<option>${v}</option>`).join('')}</select>
+    </div>
+    <div class="stats" id="statsCli" style="font-size:12px;color:var(--muted);margin-bottom:1rem;"></div>
+    <div class="cards-grid" id="gridCli"></div>`;
+  filterClientes();
+}
+
+function filterClientes(){
+  const q=(document.getElementById('searchCli')?.value||'').toLowerCase();
+  const tipo=document.getElementById('filtTipo')?.value||'';
+  const filtered=G.clientes.filter(cl=>{
+    const txt=(cl.nombre+cl.email+cl.telefono+cl.ciudad+cl.notas).toLowerCase();
+    return (!q||txt.includes(q))&&(!tipo||cl.tipo===tipo);
+  });
+  document.getElementById('statsCli').textContent=`${filtered.length} cliente${filtered.length!==1?'s':''} ${G.clientes.length!==filtered.length?'de '+G.clientes.length:'en total'}`;
+  const grid=document.getElementById('gridCli');
+  if(!grid) return;
+  if(!filtered.length){ grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><p>${G.clientes.length?'Sin resultados.':'Aún no hay clientes. Añade el primero.'}</p></div>`; return; }
+  grid.innerHTML=filtered.map(cl=>{
+    const col=colorFor(cl.nombre);
+    return`<div class="item-card" onclick="drawerCliente('${cl.id}')">
+      <div class="item-card-head">
+        <div class="avatar" style="background:${col.bg};color:${col.c};">${initials(cl.nombre)}</div>
+        <div><div class="item-name">${cl.nombre}</div><div class="item-sub">${cl.ref||''}</div></div>
+        <div style="margin-left:auto;">${badgeEstado(cl.tipo)}</div>
+      </div>
+      <div class="item-meta">
+        ${cl.telefono?`<div class="meta-row"><span class="meta-lbl">Teléfono</span><span>${cl.telefono}</span></div>`:''}
+        ${cl.email?`<div class="meta-row"><span class="meta-lbl">Email</span><span style="word-break:break-all;">${cl.email}</span></div>`:''}
+        ${cl.ciudad?`<div class="meta-row"><span class="meta-lbl">Ciudad</span><span>${cl.ciudad}</span></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function drawerCliente(id){
+  const cl=G.clientes.find(x=>String(x.id)===String(id));
+  if(!cl) return;
+  const col=colorFor(cl.nombre);
+  const pres=G.presupuestos.filter(p=>String(p.cliente_id)===String(id));
+  openDrawer(cl.nombre,`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:1.5rem;">
+      <div class="avatar" style="width:52px;height:52px;font-size:16px;background:${col.bg};color:${col.c};">${initials(cl.nombre)}</div>
+      <div><div style="font-size:18px;font-family:'Cormorant Garamond',serif;">${cl.nombre}</div>
+      <div style="font-size:12px;color:var(--muted);">${cl.ref||''} ${cl.tipo?'· '+cl.tipo:''}</div></div>
+    </div>
+    <div class="sec-title-sm">Contacto</div>
+    ${dr('Teléfono',cl.telefono)}${dr('Email',cl.email)}${dr('Dirección',cl.direccion)}${dr('Ciudad',cl.ciudad)}${dr('Contacto',cl.contacto)}
+    <div class="sec-title-sm">Datos fiscales</div>
+    ${dr('NIF / CIF',cl.nif)}${dr('Razón social',cl.razon_social)}${dr('Forma de pago',cl.forma_pago)}${dr('IBAN',cl.iban)}
+    <div class="sec-title-sm">Obra</div>
+    ${dr('Dirección obra',cl.dir_obra)}${dr('Tipo inmueble',cl.tipo_inmueble)}${dr('Superficie',cl.superficie?cl.superficie+' m²':'')}
+    ${cl.notas?`<div class="sec-title-sm">Notas</div><div style="font-size:13px;color:var(--ink);line-height:1.6;">${cl.notas}</div>`:''}
+    <div class="sec-title-sm">Presupuestos (${pres.length})</div>
+    ${pres.length?pres.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--warm);">
+      <div style="flex:1;font-size:13px;">${p.proyecto||p.numero}</div>
+      <div style="font-size:12px;color:var(--muted);">${fmt(p.total_con_iva)}</div>
+      ${badgeEstado(p.estado)}
+    </div>`).join(''):`<div style="font-size:12px;color:var(--muted);">Sin presupuestos</div>`}
+    <div style="display:flex;gap:8px;margin-top:1.5rem;flex-wrap:wrap;">
+      <button class="btn btn-gold btn-sm" onclick="closeDrawer();showPage('presupuestos');setTimeout(()=>abrirNuevoPresupuesto('${cl.id}'),150)">+ Presupuesto</button>
+      <button class="btn btn-ghost btn-sm" onclick="modalEditarCliente('${cl.id}')">Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmarDeleteCliente('${cl.id}')">Eliminar</button>
+    </div>`);
+}
+
+function dr(lbl,val){ return val?`<div class="detail-row"><span class="detail-lbl">${lbl}</span><span class="detail-val">${val}</span></div>`:''; }
+
+function modalNuevoCliente(){
+  openModal('Nuevo cliente', formCliente(), `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="guardarCliente()">Guardar</button>`);
+}
+function modalEditarCliente(id){
+  const cl=G.clientes.find(x=>String(x.id)===String(id));
+  if(!cl) return;
+  openModal('Editar cliente', formCliente(cl), `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="guardarCliente('${id}')">Guardar cambios</button>`);
+}
+
+function formCliente(cl={}){
+  return`
+  <div class="grid2">
+    <div class="field full"><label>Nombre completo / Razón social *</label><input type="text" id="f_nombre" value="${cl.nombre||''}" placeholder="Nombre del cliente"></div>
+    <div class="field"><label>Tipo de cliente</label><select id="f_tipo"><option value="">—</option>${selOpts('tipo_cliente',cl.tipo)}</select></div>
+    <div class="field"><label>Referencia</label><input type="text" id="f_ref" value="${cl.ref||''}" placeholder="CLI-001"></div>
+    <div class="field"><label>Persona de contacto</label><input type="text" id="f_contacto" value="${cl.contacto||''}"></div>
+    <div class="field"><label>Teléfono</label><input type="tel" id="f_telefono" value="${cl.telefono||''}"></div>
+    <div class="field full"><label>Email</label><input type="email" id="f_email" value="${cl.email||''}"></div>
+    <div class="field full"><label>Dirección</label><input type="text" id="f_direccion" value="${cl.direccion||''}"></div>
+    <div class="field"><label>Código postal</label><input type="text" id="f_cp" value="${cl.cp||''}"></div>
+    <div class="field"><label>Ciudad</label><input type="text" id="f_ciudad" value="${cl.ciudad||''}"></div>
+    <div style="grid-column:1/-1;border-top:var(--border);margin:4px 0 8px;"></div>
+    <div class="field"><label>NIF / CIF</label><input type="text" id="f_nif" value="${cl.nif||''}"></div>
+    <div class="field"><label>Razón social facturación</label><input type="text" id="f_razon_social" value="${cl.razon_social||''}"></div>
+    <div class="field"><label>Forma de pago</label><select id="f_forma_pago"><option value="">—</option>${selOpts('forma_pago',cl.forma_pago)}</select></div>
+    <div class="field"><label>IBAN</label><input type="text" id="f_iban" value="${cl.iban||''}"></div>
+    <div style="grid-column:1/-1;border-top:var(--border);margin:4px 0 8px;"></div>
+    <div class="field full"><label>Dirección de la obra</label><input type="text" id="f_dir_obra" value="${cl.dir_obra||''}"></div>
+    <div class="field"><label>Tipo de inmueble</label><input type="text" id="f_tipo_inmueble" value="${cl.tipo_inmueble||''}"></div>
+    <div class="field"><label>Superficie (m²)</label><input type="number" id="f_superficie" value="${cl.superficie||''}"></div>
+    <div class="field"><label>Cómo nos conoció</label><select id="f_como_conocio"><option value="">—</option>${selOpts('como_conocio',cl.como_conocio)}</select></div>
+    <div class="field"><label>Presupuesto estimado</label><input type="text" id="f_presupuesto_estimado" value="${cl.presupuesto_estimado||''}"></div>
+    <div class="field full"><label>Preferencias y estilo</label><textarea id="f_preferencias">${cl.preferencias||''}</textarea></div>
+    <div class="field full"><label>Notas</label><textarea id="f_notas">${cl.notas||''}</textarea></div>
+  </div>`;
+}
+
+function gv(id){ return document.getElementById(id)?.value||''; }
+
+async function guardarCliente(id=''){
+  const nombre=gv('f_nombre');
+  if(!nombre){ toast('El nombre es obligatorio'); return; }
+  const cl={nombre,tipo:gv('f_tipo'),ref:gv('f_ref'),contacto:gv('f_contacto'),telefono:gv('f_telefono'),email:gv('f_email'),direccion:gv('f_direccion'),cp:gv('f_cp'),ciudad:gv('f_ciudad'),nif:gv('f_nif'),razon_social:gv('f_razon_social'),forma_pago:gv('f_forma_pago'),iban:gv('f_iban'),dir_obra:gv('f_dir_obra'),tipo_inmueble:gv('f_tipo_inmueble'),superficie:gv('f_superficie'),como_conocio:gv('f_como_conocio'),presupuesto_estimado:gv('f_presupuesto_estimado'),preferencias:gv('f_preferencias'),notas:gv('f_notas')};
+  if(id){ cl.id=id; await api('updateCliente',{cliente:cl}); toast('Cliente actualizado'); }
+  else { await api('saveCliente',{cliente:cl}); toast('Cliente guardado'); }
+  closeModal(); closeDrawer();
+  await loadData(); renderClientes();
+}
+
+async function confirmarDeleteCliente(id){
+  if(!confirm('¿Eliminar este cliente?')) return;
+  await api('deleteCliente',{id});
+  toast('Cliente eliminado'); closeDrawer();
+  await loadData(); renderClientes();
+}
+
+// ── PROVEEDORES ──────────────────────────────────────────────────
+function renderProveedores(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+    <div class="page-header">
+      <div class="page-title">Proveedores</div>
+      <button class="btn btn-gold" onclick="modalNuevoProveedor()">+ Nuevo proveedor</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchProv" placeholder="Buscar proveedor..." oninput="filterProveedores()">
+      <select id="filtCat" onchange="filterProveedores()"><option value="">Todas las categorías</option>${cfgList('cat_proveedor').map(v=>`<option>${v}</option>`).join('')}</select>
+      <select id="filtPlazo" onchange="filterProveedores()"><option value="">Cualquier plazo</option>${cfgList('plazo_proveedor').map(v=>`<option>${v}</option>`).join('')}</select>
+    </div>
+    <div class="stats" id="statsProv" style="font-size:12px;color:var(--muted);margin-bottom:1rem;"></div>
+    <div class="cards-grid" id="gridProv"></div>`;
+  filterProveedores();
+}
+
+function filterProveedores(){
+  const q=(document.getElementById('searchProv')?.value||'').toLowerCase();
+  const cat=document.getElementById('filtCat')?.value||'';
+  const plazo=document.getElementById('filtPlazo')?.value||'';
+  const filtered=G.proveedores.filter(p=>{
+    const txt=(p.nombre+p.cat+p.contacto+p.notas).toLowerCase();
+    return (!q||txt.includes(q))&&(!cat||p.cat===cat)&&(!plazo||p.urgencia===plazo);
+  });
+  document.getElementById('statsProv').textContent=`${filtered.length} proveedor${filtered.length!==1?'es':''} ${G.proveedores.length!==filtered.length?'de '+G.proveedores.length:'en total'}`;
+  const grid=document.getElementById('gridProv');
+  if(!grid) return;
+  if(!filtered.length){ grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><p>${G.proveedores.length?'Sin resultados.':'Aún no hay proveedores.'}</p></div>`; return; }
+  grid.innerHTML=filtered.map(p=>{
+    const col=colorFor(p.nombre);
+    return`<div class="item-card" onclick="drawerProveedor('${p.id}')">
+      <div class="item-card-head">
+        <div class="avatar" style="background:${col.bg};color:${col.c};">${initials(p.nombre)}</div>
+        <div style="flex:1;min-width:0;"><div class="item-name">${p.nombre}</div></div>
+        <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${colorFor(p.cat).bg};color:${colorFor(p.cat).c};white-space:nowrap;flex-shrink:0;">${p.cat||'—'}</span>
+      </div>
+      <div class="item-meta">
+        ${p.contacto?`<div class="meta-row"><span class="meta-lbl">Contacto</span><span>${p.contacto}</span></div>`:''}
+        ${p.tel?`<div class="meta-row"><span class="meta-lbl">Tel / email</span><span style="word-break:break-all;">${p.tel}</span></div>`:''}
+        ${p.descuento?`<div class="meta-row"><span class="meta-lbl">Descuento</span><span>${p.descuento}</span></div>`:''}
+      </div>
+      ${p.urgencia?`<div style="margin-top:8px;">${badgeEstado(p.urgencia)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function drawerProveedor(id){
+  const p=G.proveedores.find(x=>String(x.id)===String(id));
+  if(!p) return;
+  const col=colorFor(p.nombre);
+  openDrawer(p.nombre,`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:1.5rem;">
+      <div class="avatar" style="width:52px;height:52px;font-size:16px;background:${col.bg};color:${col.c};">${initials(p.nombre)}</div>
+      <div><div style="font-size:18px;font-family:'Cormorant Garamond',serif;">${p.nombre}</div>
+      <div style="font-size:12px;color:var(--muted);">${p.cat||''}</div></div>
+    </div>
+    ${dr('Contacto',p.contacto)}${dr('Tel / email',p.tel)}${dr('Plazo entrega',p.urgencia)}${dr('Cond. de pago',p.pago)}${dr('Descuento prof.',p.descuento)}
+    ${p.web?`${dr('Web',`<a href="${p.web.startsWith('http')?p.web:'https://'+p.web}" target="_blank" style="color:var(--info);">${p.web}</a>`)}`:''}
+    ${p.notas?`<div class="sec-title-sm">Notas</div><div style="font-size:13px;line-height:1.6;">${p.notas}</div>`:''}
+    <div style="display:flex;gap:8px;margin-top:1.5rem;">
+      <button class="btn btn-ghost btn-sm" onclick="modalEditarProveedor('${p.id}')">Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmarDeleteProveedor('${p.id}')">Eliminar</button>
+    </div>`);
+}
+
+function modalNuevoProveedor(){
+  openModal('Nuevo proveedor', formProveedor(), `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="guardarProveedor()">Guardar</button>`);
+}
+function modalEditarProveedor(id){
+  const p=G.proveedores.find(x=>String(x.id)===String(id));
+  if(!p) return;
+  openModal('Editar proveedor', formProveedor(p), `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="guardarProveedor('${id}')">Guardar cambios</button>`);
+}
+
+function formProveedor(p={}){
+  return`
+  <div class="grid2">
+    <div class="field full"><label>Nombre / empresa *</label><input type="text" id="p_nombre" value="${p.nombre||''}" placeholder="Ej. Maderas García"></div>
+    <div class="field"><label>Categoría</label><select id="p_cat"><option value="">—</option>${selOpts('cat_proveedor',p.cat)}</select></div>
+    <div class="field"><label>Plazo de entrega</label><select id="p_urgencia"><option value="">—</option>${selOpts('plazo_proveedor',p.urgencia)}</select></div>
+    <div class="field"><label>Contacto (nombre)</label><input type="text" id="p_contacto" value="${p.contacto||''}"></div>
+    <div class="field"><label>Teléfono / email</label><input type="text" id="p_tel" value="${p.tel||''}"></div>
+    <div class="field"><label>Condiciones de pago</label><input type="text" id="p_pago" value="${p.pago||''}"></div>
+    <div class="field"><label>Descuento profesional</label><input type="text" id="p_descuento" value="${p.descuento||''}"></div>
+    <div class="field full"><label>Web / catálogo</label><input type="text" id="p_web" value="${p.web||''}"></div>
+    <div class="field full"><label>Notas</label><textarea id="p_notas">${p.notas||''}</textarea></div>
+  </div>`;
+}
+
+async function guardarProveedor(id=''){
+  const nombre=gv('p_nombre');
+  if(!nombre){ toast('El nombre es obligatorio'); return; }
+  const p={nombre,cat:gv('p_cat'),urgencia:gv('p_urgencia'),contacto:gv('p_contacto'),tel:gv('p_tel'),pago:gv('p_pago'),descuento:gv('p_descuento'),web:gv('p_web'),notas:gv('p_notas')};
+  if(id){ p.id=id; await api('updateProveedor',{p}); toast('Proveedor actualizado'); }
+  else { await api('saveProveedor',{p}); toast('Proveedor guardado'); }
+  closeModal(); closeDrawer();
+  await loadData(); renderProveedores();
+}
+
+async function confirmarDeleteProveedor(id){
+  if(!confirm('¿Eliminar este proveedor?')) return;
+  await api('deleteProveedor',{id});
+  toast('Proveedor eliminado'); closeDrawer();
+  await loadData(); renderProveedores();
+}
+
+// ── PRESUPUESTOS ─────────────────────────────────────────────────
+const MARGENES_PRES=[0,15,20,30,35];
+const IVAS_PRES=[21,10];
+const PARTIDAS_DEFAULT=['TRABAJOS PREVIOS / DEMOLICIONES','ALBAÑILERÍA','FONTANERÍA','ELECTRICIDAD','CARPINTERÍA MADERA','CARPINTERÍA METÁLICA','MATERIALES, ACABADOS Y OTROS','COCINA','EQUIPAMIENTO','HERRERÍA'];
+let presState={partidas:[]};
+let _presId=1; const npid=()=>++_presId;
+const fmtN=v=>(+v||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const numP=v=>parseFloat(String(v||0).replace(',','.'))||0;
+
+function renderPresupuestos(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+    <div class="page-header">
+      <div class="page-title">Presupuestos</div>
+      <button class="btn btn-gold" onclick="abrirNuevoPresupuesto()">+ Nuevo presupuesto</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchPres" placeholder="Buscar por cliente o proyecto..." oninput="filterPresupuestos()">
+      <select id="filtEstPres" onchange="filterPresupuestos()"><option value="">Todos los estados</option><option>Borrador</option><option>Enviado</option><option>Aprobado</option><option>Rechazado</option></select>
+    </div>
+    <div id="statsPres" style="font-size:12px;color:var(--muted);margin-bottom:1rem;"></div>
+    <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Nº</th><th>Cliente</th><th>Proyecto</th><th>Fecha</th><th>Total c/IVA</th><th>Estado</th></tr></thead>
+      <tbody id="tbodyPres"></tbody>
+    </table></div>`;
+  filterPresupuestos();
+}
+
+function filterPresupuestos(){
+  const q=(document.getElementById('searchPres')?.value||'').toLowerCase();
+  const est=document.getElementById('filtEstPres')?.value||'';
+  const filtered=G.presupuestos.filter(p=>{
+    const txt=(p.cliente_nombre+p.proyecto+p.numero).toLowerCase();
+    return (!q||txt.includes(q))&&(!est||p.estado===est);
+  });
+  document.getElementById('statsPres').textContent=`${filtered.length} presupuesto${filtered.length!==1?'s':''} ${G.presupuestos.length!==filtered.length?'de '+G.presupuestos.length:'en total'}`;
+  const tbody=document.getElementById('tbodyPres');
+  if(!tbody) return;
+  if(!filtered.length){ tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">${G.presupuestos.length?'Sin resultados.':'Aún no hay presupuestos guardados.'}</td></tr>`; return; }
+  tbody.innerHTML=filtered.map(p=>`
+    <tr style="cursor:pointer;" onclick="drawerPresupuesto('${p.id}')">
+      <td style="color:var(--muted);">${p.numero||'—'}</td>
+      <td>${p.cliente_nombre||'—'}</td>
+      <td>${p.proyecto||'—'}</td>
+      <td>${fmtFecha(p.fecha||p.fecha_creacion)}</td>
+      <td>${fmtN(p.total_con_iva)}</td>
+      <td>${badgeEstado(p.estado)}</td>
+    </tr>`).join('');
+}
+
+function drawerPresupuesto(id){
+  const p=G.presupuestos.find(x=>String(x.id)===String(id));
+  if(!p) return;
+  openDrawer(p.proyecto||p.numero,`
+    <div style="margin-bottom:1.5rem;">
+      <div style="font-size:18px;font-family:'Cormorant Garamond',serif;">${p.proyecto||'—'}</div>
+      <div style="font-size:12px;color:var(--muted);">Nº ${p.numero||'—'} · ${badgeEstado(p.estado)}</div>
+    </div>
+    ${dr('Cliente',p.cliente_nombre)}${dr('Fecha',fmtFecha(p.fecha))}${dr('Validez',p.validez?p.validez+' días':'')}${dr('Forma de pago',p.forma_pago)}${dr('Total sin IVA',fmtN(p.total_sin_iva))}${dr('Total con IVA',fmtN(p.total_con_iva))}${dr('Fee estudio',p.fee?fmtN(p.fee):'')}
+    <div style="display:flex;gap:8px;margin-top:1.5rem;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="cargarPresupuesto('${p.id}')">Editar</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPresPDFGuardado('${p.id}')">PDF</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmarDeletePres('${p.id}')">Eliminar</button>
+    </div>`);
+}
+
+async function confirmarDeletePres(id){
+  if(!confirm('¿Eliminar este presupuesto?')) return;
+  await api('deletePresupuesto',{id});
+  toast('Presupuesto eliminado'); closeDrawer();
+  await loadData(); renderPresupuestos();
+}
+
+// ── GENERADOR DE PRESUPUESTOS ────────────────────────────────────
+function abrirNuevoPresupuesto(clienteId=''){
+  presState={partidas:[], editandoId:null, clienteId, clienteNombre:''};
+  _presId=1;
+  PARTIDAS_DEFAULT.forEach(n=>presAddPartida(n));
+  const c=document.getElementById('content');
+  const cli=G.clientes.find(x=>String(x.id)===clienteId);
+  c.innerHTML=`
+    <div class="page-header">
+      <button class="btn btn-ghost btn-sm" onclick="renderPresupuestos()">← Volver</button>
+      <div class="page-title">Nuevo presupuesto</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="previewPresPDF()">Vista PDF</button>
+        <button class="btn btn-ghost" onclick="exportPresPDF()">Exportar PDF</button>
+        <button class="btn btn-ghost" onclick="exportListaCompra()">Lista de compra</button>
+        <button class="btn btn-ghost" onclick="modalDocProveedor()">Doc. proveedor</button>
+        <button class="btn btn-gold" onclick="guardarPresupuesto()">Guardar</button>
+      </div>
+    </div>
+
+    <div class="card card-gold" style="margin-bottom:1rem;">
+      <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">Datos del proyecto</div>
+      <div class="grid3">
+        <div class="field"><label>Nº Presupuesto</label><input type="text" id="pr_num" placeholder="2024-001"></div>
+        <div class="field"><label>Fecha</label><input type="date" id="pr_fecha" value="${new Date().toISOString().split('T')[0]}"></div>
+        <div class="field"><label>Validez (días)</label><input type="number" id="pr_validez" value="30"></div>
+        <div class="field"><label>Cliente</label>
+          <select id="pr_cli" onchange="autocompletarCliente(this.value)">
+            <option value="">— Sin cliente —</option>
+            ${G.clientes.map(cl=>`<option value="${cl.id}"${String(cl.id)===clienteId?' selected':''}>${cl.nombre}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Proyecto / descripción</label><input type="text" id="pr_proyecto" placeholder="Reforma integral piso Madrid"></div>
+        <div class="field"><label>Dirección obra</label><input type="text" id="pr_dir" value="${cli?.dir_obra||''}"></div>
+        <div class="field full"><label>Forma de pago</label><input type="text" id="pr_pago" value="${cli?.forma_pago||''}" placeholder="Ej. 40% a la firma, 30% a mitad de obra, 30% a la entrega"></div>
+        <div class="field full"><label>Nota legal (aparece en el PDF)</label><textarea id="pr_nota" style="min-height:80px;">Los Trabajos o Partidas que no estén en este presupuesto se valorarán a parte y se decidirá con la propiedad para agregarla a su sumatoria del presupuesto. Este presupuesto tiene una validez de 1 mes. El importe del presupuesto incluye el I.V.A vigente del 21%. A la aceptación del presupuesto se definirán los periodos de pago de las diferentes partidas, excepto los materiales, que deberán abonarse al 100% en el momento de entrega de la factura.</textarea></div>
+        <div class="field"><label>Estado</label>
+          <select id="pr_estado">
+            <option value="Borrador">Borrador</option>
+            <option value="Enviado">Enviado</option>
+            <option value="Aprobado">Aprobado</option>
+            <option value="Rechazado">Rechazado</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="presPartidas"></div>
+    <div style="margin:10px 0;"><button class="btn btn-ink btn-sm" onclick="modalAnadirPartida()">+ Añadir partida</button></div>
+
+    <div class="card card-gold" style="margin-top:1rem;">
+      <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">Resumen</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;" id="presResumen">
+        <thead><tr style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">
+          <th style="padding:5px 8px;text-align:left;font-weight:400;">Partida</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:400;">Sin IVA</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:400;">Con IVA</th>
+        </tr></thead>
+        <tbody id="presResumenBody"></tbody>
+      </table>
+    </div>`;
+
+  if(clienteId) autocompletarCliente(clienteId);
+  presRenderPartidas();
+}
+
+function autocompletarCliente(id){
+  const cli=G.clientes.find(x=>String(x.id)===String(id));
+  if(!cli) return;
+  if(document.getElementById('pr_dir')&&!document.getElementById('pr_dir').value) document.getElementById('pr_dir').value=cli.dir_obra||'';
+  if(document.getElementById('pr_pago')&&!document.getElementById('pr_pago').value) document.getElementById('pr_pago').value=cli.forma_pago||'';
+}
+
+function presAddPartida(nombre){
+  const id=npid();
+  presState.partidas.push({id,nombre:nombre||'',collapsed:false,subs:[{id:npid(),nombre:'',lineas:[]}]});
+  presRenderPartidas();
+}
+
+function presAddSub(pid){
+  const p=presState.partidas.find(x=>x.id===pid);
+  if(p){ p.subs.push({id:npid(),nombre:'',lineas:[]}); presRenderPartidas(); }
+}
+
+function presAddLinea(pid,sid){
+  const p=presState.partidas.find(x=>x.id===pid);
+  if(!p) return;
+  const s=p.subs.find(x=>x.id===sid);
+  if(s){ s.lineas.push({id:npid(),desc:'',detalle:'',ud:'UD',cant:1,pProv:0,margen:15,iva:21,url:''}); presRenderPartidas(); }
+}
+
+function presDelPartida(pid){ if(!confirm('¿Eliminar esta partida?')) return; presState.partidas=presState.partidas.filter(x=>x.id!==pid); presRenderPartidas(); }
+function presDelSub(pid,sid){ const p=presState.partidas.find(x=>x.id===pid); if(!p||p.subs.length<=1){alert('Mínimo un bloque.');return;} if(!confirm('¿Eliminar?')) return; p.subs=p.subs.filter(x=>x.id!==sid); presRenderPartidas(); }
+function presDelLinea(pid,sid,lid){ const p=presState.partidas.find(x=>x.id===pid); if(!p) return; const s=p.subs.find(x=>x.id===sid); if(s){s.lineas=s.lineas.filter(x=>x.id!==lid); presRenderPartidas();} }
+function presToggle(pid){ const p=presState.partidas.find(x=>x.id===pid); if(p){p.collapsed=!p.collapsed; presRenderPartidas();} }
+
+function slugClave(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_'); }
+
+function abrirCatalogoDesc(pid, sid, lid, clave){
+  const items = G.config['desc_'+clave]||[];
+  if(!items.length){
+    toast('No hay descripciones en el catálogo para esta partida. Puedes añadirlas en Configuración.');
+    return;
+  }
+  openModal('Seleccionar descripción',`
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;">Selecciona una descripción del catálogo o escribe directamente en el campo.</div>
+    ${items.map(item=>{
+      const parts = item.valor.split('||');
+      return `<div style="padding:8px 10px;border:var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#d8d0c4'" onclick="aplicarDescripcion(${pid},${sid},${lid},'${item.valor.replace(/'/g,"\'")}');closeModal()">
+        <div style="font-size:13px;font-weight:500;">${parts[0]}</div>
+        ${parts[1]?`<div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;">${parts[1]}</div>`:''}
+      </div>`;
+    }).join('')}`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>`);
+}
+
+function aplicarDescripcion(pid, sid, lid, valor){
+  const parts = valor.split('||');
+  const p = presState.partidas.find(x=>x.id===pid); if(!p) return;
+  const s = p.subs.find(x=>x.id===sid); if(!s) return;
+  const l = s.lineas.find(x=>x.id===lid); if(!l) return;
+  l.desc = parts[0]||'';
+  l.detalle = parts[1]||'';
+  presRenderPartidas();
+  presRecalcTotals();
+}
+
+function modalAnadirPartida(){
+  const extras = (G.config['partidas_presupuesto']||[]).map(x=>x.valor);
+  const optsExtras = extras.length
+    ? extras.map(p=>`<option value="${p}">${p}</option>`).join('')
+    : '';
+
+  openModal('Añadir partida',`
+    <div class="field">
+      <label>Selecciona una partida personalizada</label>
+      <select id="nueva_partida_sel"
+        style="font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;border:var(--border);border-radius:var(--radius);background:var(--cream);outline:none;width:100%;"
+        onchange="document.getElementById('nueva_partida_custom_wrap').style.display=this.value==='__nueva__'?'block':'none'">
+        ${optsExtras}
+        <option value="__nueva__">Escribir nombre nuevo...</option>
+      </select>
+    </div>
+    <div id="nueva_partida_custom_wrap" style="display:none;" class="field">
+      <label>Nombre de la nueva partida</label>
+      <input type="text" id="nueva_partida_custom" placeholder="Ej. INSTALACIONES ESPECIALES">
+    </div>`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="confirmarAnadirPartida()">Añadir</button>`);
+
+  // Si no hay extras, mostrar directamente el campo de texto
+  if(!extras.length){
+    const sel = document.getElementById('nueva_partida_sel');
+    if(sel) sel.closest('.field').style.display='none';
+    document.getElementById('nueva_partida_custom_wrap').style.display='block';
+  }
+}
+
+function confirmarAnadirPartida(){
+  const sel = document.getElementById('nueva_partida_sel');
+  let nombre = '';
+  if(!sel || sel.value === '__nueva__'){
+    nombre = document.getElementById('nueva_partida_custom')?.value.trim()||'';
+  } else {
+    nombre = sel.value;
+  }
+  if(!nombre){ toast('Escribe el nombre de la partida'); return; }
+  closeModal();
+  presAddPartida(nombre);
+  presRenderPartidas();
+  presRecalcTotals();
+}
+
+function presCalcL(l){
+  const cant=numP(l.cant),pp=numP(l.pProv),m=numP(l.margen)/100,iv=numP(l.iva)/100;
+  const pCli=pp*(1+m),pCliIva=pCli*(1+iv);
+  return{pCli,pCliIva,tProv:pp*cant,tCli:pCli*cant,tCliIva:pCliIva*cant,margenE:(pCli-pp)*cant};
+}
+function presCalcS(s){return s.lineas.reduce((a,l)=>{const c=presCalcL(l);a.tCli+=c.tCli;a.tCliIva+=c.tCliIva;a.margenE+=c.margenE;return a;},{tCli:0,tCliIva:0,margenE:0});}
+function presCalcP(p){return p.subs.reduce((a,s)=>{const c=presCalcS(s);a.tCli+=c.tCli;a.tCliIva+=c.tCliIva;a.margenE+=c.margenE;return a;},{tCli:0,tCliIva:0,margenE:0});}
+
+function presMargenSel(val){
+  const v=numP(val); const opts=[...new Set([...MARGENES_PRES,v])].sort((a,b)=>a-b);
+  return`<select data-pt="margen" style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 4px;border:1px solid var(--warm);border-radius:2px;background:var(--cream);width:100%;outline:none;" onchange="presOnSel(this,'margen')">${opts.map(o=>`<option value="${o}"${o===v?' selected':''}>${o}%</option>`).join('')}<option value="__c__">Otro...</option></select>`;
+}
+function presIvaSel(val){
+  const v=numP(val); const opts=[...new Set([...IVAS_PRES,v])].sort((a,b)=>a-b);
+  return`<select data-pt="iva" style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 4px;border:1px solid var(--warm);border-radius:2px;background:var(--cream);width:100%;outline:none;" onchange="presOnSel(this,'iva')">${opts.map(o=>`<option value="${o}"${o===v?' selected':''}>${o}%</option>`).join('')}<option value="__c__">Otro...</option></select>`;
+}
+function presOnSel(sel,tipo){
+  if(sel.value==='__c__'){
+    const v=prompt(`${tipo==='margen'?'Margen':'IVA'} personalizado (%):','`);
+    if(!v){sel.value=tipo==='margen'?15:21;return;}
+    const nv=parseFloat(v); if(isNaN(nv)){sel.value=tipo==='margen'?15:21;return;}
+    if(![...sel.options].find(o=>+o.value===nv)){const opt=document.createElement('option');opt.value=nv;opt.textContent=nv+'%';sel.insertBefore(opt,sel.lastElementChild);}
+    sel.value=nv;
+  }
+  presCalcRow(sel.closest('.pres-linea'));
+  presRecalc();
+}
+
+function presCalcRow(row){
+  if(!row) return;
+  const pp=numP(row.querySelector('[data-pf="pProv"]')?.value);
+  const cant=numP(row.querySelector('[data-pf="cant"]')?.value);
+  const m=numP(row.querySelector('[data-pt="margen"]')?.value)/100;
+  const iv=numP(row.querySelector('[data-pt="iva"]')?.value)/100;
+  const pCli=pp*(1+m),pCliIva=pCli*(1+iv),tCliIva=pCliIva*cant;
+  const o1=row.querySelector('[data-pout="pCli"]'),o2=row.querySelector('[data-pout="pCliIva"]'),o3=row.querySelector('[data-pout="tCliIva"]');
+  if(o1)o1.textContent=fmtN(pCli);
+  if(o2)o2.textContent=fmtN(pCliIva);
+  if(o3)o3.textContent=fmtN(tCliIva);
+  // sync to state
+  const lid=+row.dataset.lid;
+  for(const p of presState.partidas) for(const s of p.subs){const l=s.lineas.find(x=>x.id===lid);if(l){l.pProv=pp;l.cant=cant;l.margen=numP(row.querySelector('[data-pt="margen"]')?.value);l.iva=numP(row.querySelector('[data-pt="iva"]')?.value);}}
+  presRecalcTotals();
+}
+
+function presRecalc(){
+  document.querySelectorAll('.pres-linea').forEach(row=>presCalcRow(row));
+  presRecalcTotals();
+}
+
+function presRecalcTotals(){
+  let totSinIva=0,totConIva=0;
+  const rows=presState.partidas.map((p,pi)=>{
+    const t=presCalcP(p);
+    totSinIva+=t.tCli;totConIva+=t.tCliIva;
+    const el=document.querySelector(`[data-ptot="${p.id}"]`);
+    if(el)el.textContent=fmtN(t.tCliIva)+' IVA inc.';
+    return`<tr><td style="color:var(--muted);font-size:11px;padding:5px 8px;">${String(pi+1).padStart(2,'0')}. ${p.nombre||'Sin nombre'}</td><td style="text-align:right;padding:5px 8px;">${fmtN(t.tCli)}</td><td style="text-align:right;padding:5px 8px;">${fmtN(t.tCliIva)}</td></tr>`;
+  }).join('');
+  const feePct=numP(document.getElementById('pr_feePct')?.value||0);
+  const feeFixed=numP(document.getElementById('pr_feeFixed')?.value||0);
+  const feeImp=feePct>0?totSinIva*(feePct/100):feeFixed;
+  const grand=totConIva+feeImp;
+  const body=document.getElementById('presResumenBody');
+  if(body) body.innerHTML=rows+`
+    <tr style="border-top:2px solid var(--ink);"><td style="padding:6px 8px;font-size:13px;">Total obra</td><td style="text-align:right;padding:6px 8px;">${fmtN(totSinIva)}</td><td style="text-align:right;padding:6px 8px;">${fmtN(totConIva)}</td></tr>
+    <tr><td style="padding:5px 8px;color:var(--muted);">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">Fee del estudio
+        <input type="number" id="pr_feePct" min="0" max="100" step="0.5" placeholder="%" value="${document.getElementById('pr_feePct')?.value||''}" oninput="presRecalcTotals()" style="width:55px;font-family:'DM Mono',monospace;font-size:11px;padding:3px 6px;border:var(--border);border-radius:2px;background:var(--cream);outline:none;text-align:right;">%
+        <span style="font-size:11px;color:var(--muted);">ó</span>
+        <input type="number" id="pr_feeFixed" min="0" step="0.01" placeholder="€ fijo" value="${document.getElementById('pr_feeFixed')?.value||''}" oninput="presRecalcTotals()" style="width:80px;font-family:'DM Mono',monospace;font-size:11px;padding:3px 6px;border:var(--border);border-radius:2px;background:var(--cream);outline:none;text-align:right;">€
+      </div>
+    </td><td style="text-align:right;padding:5px 8px;color:var(--muted);">${fmtN(feeImp)}</td><td style="text-align:right;padding:5px 8px;color:var(--muted);">${fmtN(feeImp)}</td></tr>
+    <tr><td colspan="3" style="padding:0;"></td></tr>
+    <tr style="background:var(--ink);color:#fff;"><td style="padding:8px;font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:0.05em;">TOTAL PRESUPUESTO</td><td></td><td style="text-align:right;padding:8px;font-size:14px;">${fmtN(grand)}</td></tr>`;
+}
+
+function presRenderPartidas(){
+  const wrap=document.getElementById('presPartidas');
+  if(!wrap) return;
+  wrap.innerHTML=presState.partidas.map((p,pi)=>{
+    const pNum=String(pi+1).padStart(2,'0');
+    const pt=presCalcP(p);
+    const subsHTML=p.subs.map((s,si)=>{
+      const sCod=`${pNum}.${si+1}`;
+      const showSub=p.subs.length>1||(s.nombre&&s.nombre.trim());
+      const lineasHTML=s.lineas.length===0?`<div style="padding:8px 12px;font-size:11px;color:#bbb;">Sin líneas.</div>`:
+        `<div style="display:grid;grid-template-columns:36px 1fr 50px 68px 105px 76px 90px 76px 90px 90px 26px;gap:3px;padding:3px 12px;background:var(--gold-light);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;align-items:center;">
+          <div></div><div>Descripción</div><div style="text-align:center;">UD</div><div style="text-align:right;">Cant.</div><div style="text-align:right;">P.Proveedor</div><div style="text-align:right;">Margen</div><div style="text-align:right;">P.Cli s/IVA</div><div style="text-align:right;">IVA</div><div style="text-align:right;">P.Cli c/IVA</div><div style="text-align:right;">Total c/IVA</div><div></div>
+        </div>`+
+        s.lineas.map((l,li)=>{
+          const lCod=`${sCod}.${li+1}`;
+          const c=presCalcL(l);
+          return`<div class="pres-linea" data-lid="${l.id}" style="display:grid;grid-template-columns:36px 1fr 50px 68px 105px 76px 90px 76px 90px 90px 26px;gap:3px;padding:4px 12px;border-bottom:1px solid #f0ede8;align-items:start;">
+            <div style="font-size:10px;color:var(--muted);padding-top:5px;">${lCod}</div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;gap:3px;align-items:center;">
+                <input type="text" data-pf="desc" value="${l.desc}" placeholder="Descripción" style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 5px;border:1px solid transparent;border-radius:2px;background:transparent;flex:1;outline:none;" onfocus="this.style.borderColor='var(--gold)';this.style.background='var(--white)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" oninput="presyncDesc(${p.id},${s.id},${l.id},'desc',this.value)">
+                <button onclick="abrirCatalogoDesc(${p.id},${s.id},${l.id},'${slugClave(p.nombre)}')" title="Seleccionar del catálogo" style="flex-shrink:0;width:20px;height:20px;border:1px solid var(--warm);border-radius:2px;background:var(--cream);cursor:pointer;font-size:11px;color:var(--gold);display:flex;align-items:center;justify-content:center;padding:0;">≡</button>
+              </div>
+              <input type="text" data-pf="detalle" value="${l.detalle||''}" placeholder="Detalle (opcional)" style="font-family:'DM Mono',monospace;font-size:10px;padding:2px 5px;border:1px solid transparent;border-radius:2px;background:transparent;width:100%;outline:none;color:#999;" onfocus="this.style.borderColor='var(--gold)';this.style.background='var(--white)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" oninput="presyncDesc(${p.id},${s.id},${l.id},'detalle',this.value)">
+              <input type="text" data-pf="url" value="${l.url||''}" placeholder="🔗 URL de referencia" style="font-family:'DM Mono',monospace;font-size:10px;padding:2px 5px;border:1px solid transparent;border-radius:2px;background:transparent;width:100%;outline:none;color:#b8974a;" onfocus="this.style.borderColor='var(--gold)';this.style.background='var(--white)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" oninput="presyncDesc(${p.id},${s.id},${l.id},'url',this.value)">
+            </div>
+            <input type="text" data-pf="ud" value="${l.ud}" style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 5px;border:1px solid transparent;border-radius:2px;background:transparent;text-align:center;width:100%;outline:none;" onfocus="this.style.borderColor='var(--gold)';this.style.background='var(--white)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" oninput="presyncDesc(${p.id},${s.id},${l.id},'ud',this.value)">
+            <input type="number" data-pf="cant" value="${l.cant}" min="0" step="0.01" style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 5px;border:1px solid transparent;border-radius:2px;background:transparent;text-align:right;width:100%;outline:none;" onfocus="this.style.borderColor='var(--gold)';this.style.background='var(--white)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" oninput="presCalcRow(this.closest('.pres-linea'));presRecalcTotals()">
+            <input type="number" data-pf="pProv" value="${l.pProv}" min="0" step="0.01" placeholder="0,00" style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 5px;border:1px solid transparent;border-radius:2px;background:transparent;text-align:right;width:100%;outline:none;" onfocus="this.style.borderColor='var(--gold)';this.style.background='var(--white)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" oninput="presCalcRow(this.closest('.pres-linea'));presRecalcTotals()">
+            ${presMargenSel(l.margen)}
+            <div style="font-size:11px;text-align:right;padding:4px 2px;" data-pout="pCli">${fmtN(c.pCli)}</div>
+            ${presIvaSel(l.iva)}
+            <div style="font-size:11px;text-align:right;padding:4px 2px;" data-pout="pCliIva">${fmtN(c.pCliIva)}</div>
+            <div style="font-size:11px;text-align:right;padding:4px 2px;color:var(--success);" data-pout="tCliIva">${fmtN(c.tCliIva)}</div>
+            <button style="width:22px;height:22px;border:none;background:transparent;cursor:pointer;color:#ccc;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:2px;margin-top:2px;" onmouseover="this.style.color='#c00'" onmouseout="this.style.color='#ccc'" onclick="presDelLinea(${p.id},${s.id},${l.id})">×</button>
+          </div>`;
+        }).join('');
+      return`<div>
+        ${showSub?`<div style="display:flex;align-items:center;gap:8px;padding:5px 12px;background:#f0ede8;border-bottom:1px solid var(--warm);">
+          <span style="font-size:10px;color:var(--muted);min-width:32px;">${sCod}</span>
+          <input type="text" value="${s.nombre}" placeholder="Nombre del subapartado (ej. ASEO, SALÓN...)" style="flex:1;background:transparent;border:none;font-family:'DM Mono',monospace;font-size:12px;color:#555;outline:none;font-style:italic;" oninput="presyncSubNombre(${p.id},${s.id},this.value)">
+          ${p.subs.length>1?`<button style="background:transparent;border:none;color:#ccc;cursor:pointer;font-size:14px;" onclick="presDelSub(${p.id},${s.id})">×</button>`:''}
+        </div>`:''}
+        ${lineasHTML}
+      </div>`;
+    }).join('');
+
+    return`<div style="background:var(--white);border:var(--border);margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--ink);color:#fff;cursor:pointer;" onclick="presToggle(${p.id})">
+        <span style="font-size:11px;color:var(--gold);min-width:26px;">${pNum}.</span>
+        <div style="flex:1;min-width:0;" onclick="event.stopPropagation()">
+          <input type="text" value="${p.nombre}" placeholder="Nombre de la partida" style="background:transparent;border:none;color:#fff;font-family:'DM Mono',monospace;font-size:13px;width:100%;outline:none;" oninput="presyncPartidaNombre(${p.id},this.value)">
+        </div>
+        <span style="font-size:11px;color:var(--gold-light);white-space:nowrap;" data-ptot="${p.id}">${fmtN(pt.tCliIva)} IVA inc.</span>
+        <button style="background:transparent;border:none;color:#666;cursor:pointer;font-size:14px;padding:2px 5px;" onclick="event.stopPropagation();presDelPartida(${p.id})">✕</button>
+        <span style="font-size:13px;color:#888;transition:transform 0.2s;${p.collapsed?'':'transform:rotate(180deg)'}">▾</span>
+      </div>
+      <div style="${p.collapsed?'display:none;':''}">
+        ${subsHTML}
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:8px 12px;border-top:var(--border);background:var(--cream);">
+          <div style="display:flex;gap:8px;">
+            <button class="add-sm" onclick="presAddLinea(${p.id},${p.subs[p.subs.length-1].id})">+ Añadir línea</button>
+            <button class="add-sm" onclick="presAddSub(${p.id})">+ Añadir subapartado</button>
+          </div>
+          <div style="display:flex;gap:1rem;font-size:11px;">
+            <span style="color:var(--muted);">Sin IVA: <strong style="color:var(--ink);">${fmtN(pt.tCli)}</strong></span>
+            <span style="color:var(--muted);">Con IVA: <strong style="color:var(--ink);">${fmtN(pt.tCliIva)}</strong></span>
+            <span style="color:var(--muted);">Margen: <strong style="color:var(--ink);">${fmtN(pt.margenE)}</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Re-attach select listeners
+  document.querySelectorAll('.pres-linea select').forEach(sel=>{
+    sel.addEventListener('change',function(){ presOnSel(this,this.dataset.pt||'margen'); });
+  });
+  presRecalcTotals();
+}
+
+function presyncPartidaNombre(pid,val){ const p=presState.partidas.find(x=>x.id===pid); if(p) p.nombre=val; presRecalcTotals(); }
+function presyncSubNombre(pid,sid,val){ const p=presState.partidas.find(x=>x.id===pid); if(!p) return; const s=p.subs.find(x=>x.id===sid); if(s) s.nombre=val; }
+function presyncDesc(pid,sid,lid,field,val){ const p=presState.partidas.find(x=>x.id===pid); if(!p) return; for(const s of p.subs){const l=s.lineas.find(x=>x.id===lid);if(l){l[field]=val;return;}} }
+
+function presBuildPDFContent(){
+  const cliente_id=document.getElementById('pr_cli')?.value||'';
+  const cli=G.clientes.find(x=>String(x.id)===cliente_id);
+  const numero=document.getElementById('pr_num')?.value||'—';
+  const fechaRaw=document.getElementById('pr_fecha')?.value;
+  const fecha=fechaRaw?new Date(fechaRaw+'T12:00:00').toLocaleDateString('es-ES'):'—';
+  const validez=document.getElementById('pr_validez')?.value||'30';
+  const proyecto=document.getElementById('pr_proyecto')?.value||'—';
+  const dir=document.getElementById('pr_dir')?.value||'';
+  const pago=document.getElementById('pr_pago')?.value||'';
+  const nota=document.getElementById('pr_nota')?.value||'';
+  const estudio=G.estudio||{nombre:'LATON studio',cif:'76088698Y',tel:'+34 692 819 091',email:'',web:'',dir:''};
+  const cli_id_pdf=document.getElementById('pr_cli')?.value||'';
+  const cli_pdf=G.clientes.find(x=>String(x.id)===cli_id_pdf);
+  const cliente=cli_pdf?.nombre||'';
+  const clienteNIF=cli_pdf?.nif||'';
+  let totSinIva=0,totConIva=0;
+
+  const pHTML=presState.partidas.map((p,pi)=>{
+    const pN=String(pi+1).padStart(2,'0');
+    const pt=presCalcP(p);
+    totSinIva+=pt.tCli; totConIva+=pt.tCliIva;
+    if(pt.tCliIva===0&&p.subs.every(s=>s.lineas.length===0)) return '';
+    const subsHTML=p.subs.map((s,si)=>{
+      if(!s.lineas.length) return '';
+      const sCod=`${pN}.${si+1}`;
+      const st=presCalcS(s);
+      const hasName=s.nombre&&s.nombre.trim()&&p.subs.length>1;
+      return`${hasName?`<div style="background:#f0ede8;color:#555;padding:3px 8px;font-size:9px;font-style:italic;border-bottom:1px solid #e2dbd0;">${sCod}. ${s.nombre}</div>`:''}
+        <table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:4px;">
+          <thead><tr>
+            <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:left;width:40px;">Cód.</th>
+            <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:left;">Descripción</th>
+            <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:center;">UD</th>
+            <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">Cant.</th>
+            <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">P.Unit s/IVA</th>
+            <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">P.Unit c/IVA</th>
+            <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">Total c/IVA</th>
+          </tr></thead>
+          <tbody>
+          ${s.lineas.map((l,li)=>{const c=presCalcL(l);const lCod=`${sCod}.${li+1}`;return`<tr>
+            <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;color:#888;">${lCod}</td>
+            <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;"><div>${l.desc||'—'}</div>${l.detalle?`<div style="font-size:8px;color:#999;">${l.detalle}</div>`:''}</td>
+            <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:center;">${l.ud}</td>
+            <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;">${numP(l.cant).toLocaleString('es-ES')}</td>
+            <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN(c.pCli)}</td>
+            <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN(c.pCliIva)}</td>
+            <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN(c.tCliIva)}</td>
+          </tr>`;}).join('')}
+          <tr><td colspan="5" style="padding:3px 6px;background:#f8f5f0;border-top:1px solid #1c1a18;"></td>
+            <td style="padding:3px 6px;background:#f8f5f0;border-top:1px solid #1c1a18;font-size:8px;color:#8a8278;">Subtotal s/IVA</td>
+            <td style="padding:3px 6px;background:#f8f5f0;border-top:1px solid #1c1a18;text-align:right;white-space:nowrap;">${fmtN(st.tCli)}</td></tr>
+          <tr><td colspan="5" style="padding:3px 6px;background:#f8f5f0;"></td>
+            <td style="padding:3px 6px;background:#f8f5f0;font-size:8px;color:#8a8278;">Subtotal c/IVA</td>
+            <td style="padding:3px 6px;background:#f8f5f0;text-align:right;white-space:nowrap;">${fmtN(st.tCliIva)}</td></tr>
+          </tbody>
+        </table>`;
+    }).join('');
+    return`<div style="background:#1c1a18;color:#f8f5f0;padding:5px 8px;font-size:9px;letter-spacing:0.08em;margin:1rem 0 0;">${pN}. ${p.nombre||'Partida sin nombre'}</div>${subsHTML}`;
+  }).join('');
+
+  const feePct=numP(document.getElementById('pr_feePct')?.value||0);
+  const feeFixed=numP(document.getElementById('pr_feeFixed')?.value||0);
+  const feeImp=feePct>0?totSinIva*(feePct/100):feeFixed;
+  const grand=totConIva+feeImp;
+
+  return`<div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;letter-spacing:0.25em;color:#1c1a18;">LATON <em style="color:#b8974a;font-style:normal;">Studio</em></div>
+    <div style="font-size:9px;color:#888;letter-spacing:0.1em;margin-bottom:1.5rem;">PRESUPUESTO</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:1.2rem 0;padding-bottom:1.2rem;border-bottom:2px solid #1c1a18;">
+      <div><div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Cliente</div>
+        <div style="font-size:12px;">${cli?.nombre||'—'}</div>
+        ${cli?.dir_obra?`<div style="font-size:10px;color:#888;margin-top:3px;">${cli.dir_obra}</div>`:''}
+        ${dir&&dir!==(cli?.dir_obra||'')?`<div style="font-size:10px;color:#888;margin-top:3px;">${dir}</div>`:''}
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Nº Presupuesto</div><div style="font-size:12px;">${numero}</div>
+        <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 3px;">Fecha</div><div style="font-size:12px;">${fecha}</div>
+        <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 3px;">Válido</div><div style="font-size:12px;">${validez} días desde emisión</div>
+      </div>
+    </div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:14px;color:#555;margin-bottom:1.5rem;font-style:italic;">${proyecto}</div>
+    ${nota?`<div style="background:#f8f5f0;border-left:3px solid var(--gold,#b8974a);padding:10px 14px;font-size:9px;color:#555;line-height:1.8;margin-bottom:1.5rem;">NOTA: ${nota}</div>`:''}
+    ${pHTML}
+    <div style="margin-top:2rem;border-top:2px solid #1c1a18;padding-top:1rem;">
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #e2dbd0;"><span>Total obra sin IVA</span><span>${fmtN(totSinIva)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #e2dbd0;"><span>Total obra con IVA</span><span>${fmtN(totConIva)}</span></div>
+      ${feeImp>0?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #e2dbd0;"><span>Fee del estudio</span><span>${fmtN(feeImp)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;background:#1c1a18;color:#f8f5f0;padding:9px 10px;margin-top:6px;font-size:13px;"><span>TOTAL PRESUPUESTO</span><span>${fmtN(grand)}</span></div>
+    </div>
+    ${pago?`<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:9px;color:#8a8278;line-height:1.8;"><strong>Forma de pago:</strong> ${pago}</div>`:''}
+    ${nota?`<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:9px;color:#8a8278;line-height:1.8;">NOTA: ${nota}</div>`:''}
+    <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:8px;color:#bbb;text-align:center;">Presupuesto válido ${validez} días desde la fecha de emisión · Laton Studio</div>`;
+}
+
+function modalDocProveedor(){
+  if(!presState.partidas.length){ toast('No hay partidas en este presupuesto'); return; }
+
+  const partidasConLineas = presState.partidas.filter(p =>
+    p.subs.some(s => s.lineas.length > 0)
+  );
+
+  if(!partidasConLineas.length){ toast('No hay líneas en este presupuesto'); return; }
+
+  const checkboxes = partidasConLineas.map((p,pi) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--warm);">
+      <input type="checkbox" id="chk_p_${p.id}" value="${p.id}" checked
+        style="margin-top:3px;cursor:pointer;accent-color:var(--gold);">
+      <div>
+        <label for="chk_p_${p.id}" style="font-size:13px;cursor:pointer;font-weight:500;">${p.nombre||'Partida sin nombre'}</label>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+          ${p.subs.reduce((a,s)=>a+s.lineas.length,0)} línea${p.subs.reduce((a,s)=>a+s.lineas.length,0)!==1?'s':''}
+        </div>
+      </div>
+    </div>`).join('');
+
+  openModal('Documento para proveedor', `
+    <div class="field">
+      <label>Nombre del proveedor (opcional)</label>
+      <input type="text" id="doc_proveedor_nombre" placeholder="Ej. Maderas García">
+    </div>
+    <div class="field">
+      <label>Observaciones para el proveedor (opcional)</label>
+      <textarea id="doc_proveedor_obs" placeholder="Ej. Necesitamos presupuesto antes del 15 de junio. Visita a obra disponible." style="min-height:70px;"></textarea>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin:1rem 0 8px;">Selecciona las partidas a incluir</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="toggleTodosChk(true)">Seleccionar todo</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleTodosChk(false)">Deseleccionar todo</button>
+    </div>
+    ${checkboxes}
+  `, `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="exportDocProveedor()">Generar documento</button>
+  `);
+}
+
+function toggleTodosChk(val){
+  document.querySelectorAll('[id^="chk_p_"]').forEach(chk => chk.checked = val);
+}
+
+function exportDocProveedor(){
+  const nombreProv = document.getElementById('doc_proveedor_nombre')?.value.trim() || '';
+  const obs = document.getElementById('doc_proveedor_obs')?.value.trim() || '';
+
+  const seleccionadas = [];
+  document.querySelectorAll('[id^="chk_p_"]').forEach(chk => {
+    if(chk.checked) seleccionadas.push(+chk.value);
+  });
+  if(!seleccionadas.length){ toast('Selecciona al menos una partida'); return; }
+
+  const proyecto = document.getElementById('pr_proyecto')?.value || '—';
+  const dir = document.getElementById('pr_dir')?.value || '';
+  const fecha = new Date().toLocaleDateString('es-ES');
+  const cli_id = document.getElementById('pr_cli')?.value || '';
+  const cli = G.clientes.find(x=>String(x.id)===cli_id);
+  const estudio = G.estudio||{nombre:'LATON studio',cif:'76088698Y',tel:'+34 692 819 091'};
+
+  const partidasFiltradas = presState.partidas.filter(p => seleccionadas.includes(p.id));
+
+  const partidasHTML = partidasFiltradas.map((p, pi) => {
+    const lineas = p.subs.flatMap(s => s.lineas);
+    if(!lineas.length) return '';
+
+    const lineasHTML = lineas.map((l, li) => `
+      <tr>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;color:#aaa;font-size:9px;">${li+1}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;">
+          <div style="font-weight:500;">${l.desc||'—'}</div>
+          ${l.detalle?`<div style="font-size:8px;color:#999;margin-top:2px;">${l.detalle}</div>`:''}
+        </td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:center;">${l.ud||'UD'}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:right;">${(+l.cant||1).toLocaleString('es-ES')}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;"></td>
+      </tr>`).join('');
+
+    return `
+      <div style="background:#1c1a18;color:#f8f5f0;padding:5px 10px;font-size:9px;letter-spacing:0.08em;margin:1.2rem 0 0;">${p.nombre||'Partida sin nombre'}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;">
+        <thead><tr>
+          <th style="background:#e8dcc8;padding:5px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;width:30px;">Nº</th>
+          <th style="background:#e8dcc8;padding:5px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;">Descripción</th>
+          <th style="background:#e8dcc8;padding:5px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:center;width:55px;">UD</th>
+          <th style="background:#e8dcc8;padding:5px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:right;width:65px;">Medición</th>
+          <th style="background:#e8dcc8;padding:5px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:right;width:100px;">Precio unitario</th>
+        </tr></thead>
+        <tbody>${lineasHTML}
+        <tr>
+          <td colspan="3" style="padding:5px 8px;background:#f8f5f0;border-top:1px solid #1c1a18;"></td>
+          <td style="padding:5px 8px;background:#f8f5f0;border-top:1px solid #1c1a18;font-size:8px;color:#8a8278;text-align:right;">TOTAL PARTIDA</td>
+          <td style="padding:5px 8px;background:#f8f5f0;border-top:1px solid #1c1a18;"></td>
+        </tr>
+        </tbody>
+      </table>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Solicitud de presupuesto — ${proyecto}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Mono',monospace;font-size:11px;color:#1c1a18;padding:2cm;background:#fff;}
+    @media print{body{padding:1.5cm;}@page{margin:1cm;size:A4;}}
+  </style>
+  </head><body>
+
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
+    <div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;letter-spacing:0.2em;color:#1c1a18;">LATON <em style="color:#b8974a;font-style:normal;">Studio</em></div>
+      <div style="font-size:9px;color:#888;letter-spacing:0.12em;margin-top:4px;">SOLICITUD DE PRESUPUESTO</div>
+      <div style="font-size:8px;color:#8a8278;margin-top:6px;line-height:1.7;">
+        ${G.estudio?.cif?`CIF: ${G.estudio.cif} · `:''}${G.estudio?.tel?`Tel: ${G.estudio.tel}`:''}
+        ${G.estudio?.email?`<br>${G.estudio.email}`:''}
+      </div>
+    </div>
+    ${nombreProv ? `<div style="text-align:right;"><div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Para</div><div style="font-size:14px;font-family:'Cormorant Garamond',serif;">${nombreProv}</div></div>` : ''}
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:1rem 0;padding:1rem 0;border-top:2px solid #1c1a18;border-bottom:1px solid #e2dbd0;">
+    <div>
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Proyecto</div>
+      <div style="font-size:13px;font-family:'Cormorant Garamond',serif;font-style:italic;">${proyecto}</div>
+      ${cli ? `<div style="font-size:10px;color:#8a8278;margin-top:4px;">Cliente: ${cli.nombre}</div>` : ''}
+      ${dir ? `<div style="font-size:10px;color:#8a8278;margin-top:2px;">Dirección: ${dir}</div>` : ''}
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Fecha solicitud</div>
+      <div style="font-size:12px;">${fecha}</div>
+    </div>
+  </div>
+
+  ${obs ? `<div style="background:#f8f5f0;border-left:3px solid #b8974a;padding:10px 14px;font-size:9px;color:#555;line-height:1.8;margin:1rem 0;"><strong>Observaciones:</strong> ${obs}</div>` : ''}
+
+  ${partidasHTML}
+
+  <div style="margin-top:2rem;padding:1rem;border:1px solid #e2dbd0;background:#f8f5f0;">
+    <div style="font-size:9px;color:#8a8278;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Resumen de totales</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <thead><tr>
+        <th style="padding:4px 8px;background:#e8dcc8;font-size:8px;color:#8a8278;font-weight:400;text-align:left;">Partida</th>
+        <th style="padding:4px 8px;background:#e8dcc8;font-size:8px;color:#8a8278;font-weight:400;text-align:right;width:120px;">Importe oferta</th>
+      </tr></thead>
+      <tbody>
+        ${partidasFiltradas.map(p=>`<tr><td style="padding:4px 8px;border-bottom:1px solid #e2dbd0;">${p.nombre||'—'}</td><td style="padding:4px 8px;border-bottom:1px solid #e2dbd0;"></td></tr>`).join('')}
+        <tr style="background:#1c1a18;color:#f8f5f0;">
+          <td style="padding:6px 8px;font-weight:500;">TOTAL</td>
+          <td style="padding:6px 8px;"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:8px;color:#bbb;line-height:1.8;">
+    Por favor, envíe su oferta desglosada por partidas indicando precio unitario e importe total.<br>
+    Laton Studio · ${fecha}
+  </div>
+
+  </body></html>`;
+
+  closeModal();
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(), 800);
+}
+
+function exportListaCompra(){
+  // Mostrar modal para seleccionar partidas
+  const partidasConURL = presState.partidas.filter(p =>
+    p.subs.some(s => s.lineas.some(l => l.url && l.url.trim()))
+  );
+  if(!partidasConURL.length){
+    alert('No hay productos con URL de referencia en este presupuesto.');
+    return;
+  }
+  openModal('Lista de compra para cliente',`
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;">Selecciona qué partidas incluir. Solo aparecerán las líneas con URL de referencia.</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="toggleTodosChk(true)">Seleccionar todo</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleTodosChk(false)">Deseleccionar todo</button>
+    </div>
+    ${partidasConURL.map(p=>`
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--warm);">
+        <input type="checkbox" id="chk_lc_${p.id}" value="${p.id}" checked style="margin-top:3px;cursor:pointer;accent-color:var(--gold);">
+        <div>
+          <label for="chk_lc_${p.id}" style="font-size:13px;cursor:pointer;font-weight:500;">${p.nombre}</label>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+            ${p.subs.reduce((a,s)=>a+s.lineas.filter(l=>l.url&&l.url.trim()).length,0)} producto${p.subs.reduce((a,s)=>a+s.lineas.filter(l=>l.url&&l.url.trim()).length,0)!==1?'s':''}  con enlace
+          </div>
+        </div>
+      </div>`).join('')}
+    <div style="margin-top:1rem;" class="field">
+      <label>¿Mostrar precios?</label>
+      <select id="lc_precios" style="font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;border:var(--border);border-radius:var(--radius);background:var(--cream);outline:none;width:100%;">
+        <option value="no">Sin precios</option>
+        <option value="si">Con precios del presupuesto</option>
+      </select>
+    </div>`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="generarListaCompra()">Generar lista</button>`);
+}
+
+function generarListaCompra(){
+  const seleccionadas = [];
+  document.querySelectorAll('[id^="chk_lc_"]').forEach(chk=>{
+    if(chk.checked) seleccionadas.push(+chk.value);
+  });
+  if(!seleccionadas.length){ toast('Selecciona al menos una partida'); return; }
+  const mostrarPrecios = document.getElementById('lc_precios')?.value === 'si';
+  closeModal();
+
+  // Recoger solo líneas con URL de partidas seleccionadas
+  const items = [];
+  presState.partidas.forEach((p,pi)=>{
+    if(!seleccionadas.includes(p.id)) return;
+    const pN = String(pi+1).padStart(2,'0');
+    p.subs.forEach((s,si)=>{
+      s.lineas.forEach((l,li)=>{
+        if(l.url && l.url.trim()){
+          const c = presCalcL(l);
+          items.push({
+            cod: `${pN}.${si+1}.${li+1}`,
+            partida: p.nombre,
+            desc: l.desc||'—',
+            detalle: l.detalle||'',
+            ud: l.ud||'UD',
+            cant: l.cant||1,
+            url: l.url.trim(),
+            pCliIva: c.pCliIva,
+            tCliIva: c.tCliIva
+          });
+        }
+      });
+    });
+  });
+
+  if(!items.length){ toast('No hay productos con URL en las partidas seleccionadas'); return; }
+
+  const fmtN2 = v => (+v||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  const cliente = G.clientes.find(x=>String(x.id)===String(document.getElementById('pr_cli')?.value||''));
+  const proyecto = document.getElementById('pr_proyecto')?.value||'—';
+  const fecha = new Date().toLocaleDateString('es-ES');
+  const estudio = G.estudio||{nombre:'LATON studio'};
+  const porPartida = {};
+  items.forEach(i=>{ if(!porPartida[i.partida]) porPartida[i.partida]=[]; porPartida[i.partida].push(i); });
+
+  const partidasHTML = Object.entries(porPartida).map(([nombre, lins])=>`
+    <div style="background:#1c1a18;color:#f8f5f0;padding:5px 10px;font-size:9px;letter-spacing:0.08em;margin:1.2rem 0 0;">${nombre}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <thead><tr>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;width:40px;">Cód.</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;">Descripción</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:center;width:50px;">UD</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:right;width:60px;">Cant.</th>
+        ${mostrarPrecios?`
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:right;width:80px;">P.Unit c/IVA</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:right;width:90px;">Total c/IVA</th>`:''}
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;">Enlace</th>
+      </tr></thead>
+      <tbody>${lins.map(l=>`<tr>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;color:#aaa;font-size:9px;">${l.cod}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;">
+          <div style="font-weight:500;">${l.desc}</div>
+          ${l.detalle?`<div style="font-size:8px;color:#999;margin-top:1px;">${l.detalle}</div>`:''}
+        </td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:center;">${l.ud}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:right;">${(+l.cant).toLocaleString('es-ES')}</td>
+        ${mostrarPrecios?`
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN2(l.pCliIva)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN2(l.tCliIva)}</td>`:''}
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;">
+          <a href="${l.url}" target="_blank" style="color:#b8974a;font-size:9px;word-break:break-all;">${l.url}</a>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Lista de compra — ${proyecto}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Mono',monospace;font-size:11px;color:#1c1a18;padding:2cm;background:#fff;}@media print{body{padding:1.5cm;}@page{margin:1cm;size:A4;}}</style>
+  </head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+    <div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;letter-spacing:0.2em;">LATON <em style="color:#b8974a;font-style:normal;">Studio</em></div>
+      <div style="font-size:9px;color:#888;letter-spacing:0.1em;margin-top:2px;">LISTA DE COMPRA</div>
+    </div>
+    <div style="text-align:right;font-size:9px;color:#8a8278;line-height:1.8;">
+      ${estudio.cif?`<div>CIF: ${estudio.cif}</div>`:''}
+      ${estudio.tel?`<div>Tel: ${estudio.tel}</div>`:''}
+      ${estudio.email?`<div>${estudio.email}</div>`:''}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:1rem 0;padding-bottom:1rem;border-bottom:2px solid #1c1a18;">
+    <div>
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Cliente</div>
+      <div style="font-size:12px;">${cliente?.nombre||'—'}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Proyecto</div>
+      <div style="font-size:12px;">${proyecto}</div>
+      <div style="font-size:8px;color:#8a8278;margin-top:4px;">${fecha}</div>
+    </div>
+  </div>
+  <div style="background:#fef3e2;border-left:3px solid #b8974a;padding:8px 12px;font-size:9px;color:#7a4f00;line-height:1.7;margin:1rem 0;">
+    Esta lista incluye los productos que pueden adquirirse directamente. ${mostrarPrecios?'Los precios indicados corresponden al presupuesto aprobado.':'Los precios mostrados en los enlaces son orientativos y pueden variar.'} Verificar disponibilidad antes de la compra.
+  </div>
+  ${partidasHTML}
+  <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:8px;color:#bbb;text-align:center;">Lista de compra generada por ${estudio.nombre} · ${fecha}</div>
+  </body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(), 800);
+}
+
+function exportListaCompraOLD(){
+  // Recoger solo líneas con URL
+  const items = [];
+  presState.partidas.forEach((p,pi)=>{
+    const pN = String(pi+1).padStart(2,'0');
+    p.subs.forEach((s,si)=>{
+      s.lineas.forEach((l,li)=>{
+        if(l.url && l.url.trim()){
+          items.push({
+            cod: `${pN}.${si+1}.${li+1}`,
+            partida: p.nombre,
+            desc: l.desc||'—',
+            detalle: l.detalle||'',
+            ud: l.ud||'UD',
+            cant: l.cant||1,
+            url: l.url.trim()
+          });
+        }
+      });
+    });
+  });
+
+  if(!items.length){
+    alert('No hay productos con URL de referencia en este presupuesto.');
+    return;
+  }
+
+  const cliente = G.clientes.find(x=>String(x.id)===String(document.getElementById('pr_cli')?.value||''));
+  const proyecto = document.getElementById('pr_proyecto')?.value||'—';
+  const fecha = new Date().toLocaleDateString('es-ES');
+
+  // Agrupar por partida
+  const porPartida = {};
+  items.forEach(i=>{ if(!porPartida[i.partida]) porPartida[i.partida]=[]; porPartida[i.partida].push(i); });
+
+  const partidasHTML = Object.entries(porPartida).map(([nombre, lins])=>`
+    <div style="background:#1c1a18;color:#f8f5f0;padding:5px 10px;font-size:9px;letter-spacing:0.08em;margin:1.2rem 0 0;">${nombre}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <thead><tr>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;width:40px;">Cód.</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;">Descripción</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:center;width:50px;">UD</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:right;width:60px;">Cant.</th>
+        <th style="background:#e8dcc8;padding:4px 8px;font-size:8px;color:#8a8278;font-weight:400;text-align:left;">Enlace</th>
+      </tr></thead>
+      <tbody>${lins.map(l=>`<tr>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;color:#aaa;font-size:9px;">${l.cod}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;">
+          <div style="font-weight:500;">${l.desc}</div>
+          ${l.detalle?`<div style="font-size:8px;color:#999;margin-top:1px;">${l.detalle}</div>`:''}
+        </td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:center;">${l.ud}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;text-align:right;">${(+l.cant).toLocaleString('es-ES')}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e2dbd0;">
+          <a href="${l.url}" target="_blank" style="color:#b8974a;font-size:9px;word-break:break-all;">${l.url}</a>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Lista de compra — ${proyecto}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Mono',monospace;font-size:11px;color:#1c1a18;padding:2cm;background:#fff;}
+    @media print{body{padding:1.5cm;}@page{margin:1cm;size:A4;}}
+  </style>
+  </head><body>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;letter-spacing:0.2em;color:#1c1a18;">LATON <em style="color:#b8974a;font-style:normal;">Studio</em></div>
+  <div style="font-size:9px;color:#888;letter-spacing:0.1em;margin-bottom:1.5rem;">LISTA DE COMPRA</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:1rem 0;padding-bottom:1rem;border-bottom:2px solid #1c1a18;">
+    <div>
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Cliente</div>
+      <div style="font-size:12px;">${cliente?.nombre||'—'}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Proyecto</div>
+      <div style="font-size:12px;">${proyecto}</div>
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 3px;">Fecha</div>
+      <div style="font-size:12px;">${fecha}</div>
+    </div>
+  </div>
+  <div style="background:#fef3e2;border-left:3px solid #b8974a;padding:8px 12px;font-size:9px;color:#7a4f00;line-height:1.7;margin:1rem 0;">
+    Esta lista incluye los productos que pueden adquirirse directamente. Los precios mostrados en los enlaces son orientativos y pueden variar. Verificar disponibilidad y precio antes de la compra.
+  </div>
+  ${partidasHTML}
+  <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:8px;color:#bbb;text-align:center;">
+    Lista de compra generada por Laton Studio · ${fecha}
+  </div>
+  </body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(), 800);
+}
+
+function previewPresPDF(){
+  const content=presBuildPDFContent();
+  openModal('Vista previa PDF',`<div style="font-family:'DM Mono',monospace;font-size:12px;">${content}</div>`,`<button class="btn btn-ghost" onclick="closeModal()">Cerrar</button><button class="btn btn-gold" onclick="exportPresPDF()">Imprimir / PDF</button>`);
+}
+
+function exportPresPDF(){
+  const content=presBuildPDFContent();
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto — Laton Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Mono',monospace;font-size:11px;color:#1c1a18;padding:2cm;background:#fff;}@media print{body{padding:1.5cm;}@page{margin:1cm;size:A4;}}</style>
+  </head><body>${content}</body></html>`);
+  w.document.close(); setTimeout(()=>w.print(),800);
+}
+
+async function guardarPresupuesto(){
+  // Sincronizar todos los campos del DOM al estado antes de guardar
+  document.querySelectorAll('.pres-linea').forEach(row=>{
+    const lid = +row.dataset.lid;
+    for(const p of presState.partidas){
+      for(const s of p.subs){
+        const l = s.lineas.find(x=>x.id===lid);
+        if(l){
+          l.desc    = row.querySelector('[data-pf="desc"]')?.value    || l.desc;
+          l.detalle = row.querySelector('[data-pf="detalle"]')?.value || l.detalle;
+          l.ud      = row.querySelector('[data-pf="ud"]')?.value      || l.ud;
+          l.url     = row.querySelector('[data-pf="url"]')?.value     || '';
+          l.cant    = numP(row.querySelector('[data-pf="cant"]')?.value);
+          l.pProv   = numP(row.querySelector('[data-pf="pProv"]')?.value);
+          l.margen  = numP(row.querySelector('[data-pt="margen"]')?.value);
+          l.iva     = numP(row.querySelector('[data-pt="iva"]')?.value);
+        }
+      }
+    }
+  });
+
+  const numero=document.getElementById('pr_num')?.value||'';
+  const proyecto=document.getElementById('pr_proyecto')?.value||'';
+  if(!proyecto){ toast('Introduce el nombre del proyecto'); return; }
+  const cli_id=document.getElementById('pr_cli')?.value||'';
+  const cli=G.clientes.find(x=>String(x.id)===cli_id);
+  let totSinIva=0,totConIva=0;
+  const lineas=[];
+  presState.partidas.forEach((p,pi)=>{
+    const pN=String(pi+1).padStart(2,'0');
+    p.subs.forEach((s,si)=>{
+      const sCod=`${pN}.${si+1}`;
+      s.lineas.forEach((l,li)=>{
+        const c=presCalcL(l);
+        totSinIva+=c.tCli; totConIva+=c.tCliIva;
+        lineas.push({partida:p.nombre,sub:s.nombre,cod:`${sCod}.${li+1}`,desc:l.desc,detalle:l.detalle,ud:l.ud,cant:l.cant,pProv:l.pProv,margen:l.margen,iva:l.iva,pCli:c.pCli,pCliIva:c.pCliIva,tCliIva:c.tCliIva,url:l.url||''});
+      });
+    });
+  });
+  const feePct=numP(document.getElementById('pr_feePct')?.value||0);
+  const feeFixed=numP(document.getElementById('pr_feeFixed')?.value||0);
+  const feeImp=feePct>0?totSinIva*(feePct/100):feeFixed;
+  const pres={numero,cliente_id:cli_id,cliente_nombre:cli?.nombre||'',proyecto,direccion:document.getElementById('pr_dir')?.value||'',fecha:document.getElementById('pr_fecha')?.value||'',validez:document.getElementById('pr_validez')?.value||'30',forma_pago:document.getElementById('pr_pago')?.value||'',fee:feeImp,total_sin_iva:totSinIva,total_con_iva:totConIva,estado:document.getElementById('pr_estado')?.value||'Borrador',lineas};
+  const btn=event.target; btn.disabled=true; btn.textContent='Guardando...';
+  let r;
+  if(presState.editandoId){
+    // Borrar líneas antiguas y guardar nuevas
+    await api('deleteLineasPresupuesto',{id:presState.editandoId});
+    pres.id = presState.editandoId;
+    r = await api('updatePresupuesto',{p:pres});
+  } else {
+    r = await api('savePresupuesto',{p:pres});
+  }
+  if(r&&r.ok){ toast(presState.editandoId?'Presupuesto actualizado':'Presupuesto guardado'); await loadData(); renderPresupuestos(); }
+  else { toast('Error al guardar'); btn.disabled=false; btn.textContent=presState.editandoId?'Guardar cambios':'Guardar'; }
+}
+
+// ── TAREAS ───────────────────────────────────────────────────────
+function renderTareas(){
+  const c=document.getElementById('content');
+  const pendientes=G.tareas.filter(t=>t.estado==='Pendiente');
+  const enCurso=G.tareas.filter(t=>t.estado==='En curso');
+  const cerradas=G.tareas.filter(t=>t.estado==='Cerrado');
+  c.innerHTML=`
+    <div class="page-header">
+      <div class="page-title">Tareas</div>
+      <button class="btn btn-gold" onclick="modalNuevaTarea()">+ Nueva tarea</button>
+    </div>
+    <div class="kanban">
+      <div class="kanban-col">
+        <div class="kanban-col-title">Pendiente (${pendientes.length})</div>
+        ${pendientes.map(t=>kanbanCard(t)).join('')}
+        <button class="add-kanban" onclick="modalNuevaTarea('Pendiente')">+ Añadir</button>
+      </div>
+      <div class="kanban-col">
+        <div class="kanban-col-title">En curso (${enCurso.length})</div>
+        ${enCurso.map(t=>kanbanCard(t)).join('')}
+        <button class="add-kanban" onclick="modalNuevaTarea('En curso')">+ Añadir</button>
+      </div>
+      <div class="kanban-col">
+        <div class="kanban-col-title">Cerrado (${cerradas.length})</div>
+        ${cerradas.map(t=>kanbanCard(t)).join('')}
+      </div>
+    </div>`;
+}
+
+function kanbanCard(t){
+  return`<div class="kanban-card" onclick="drawerTarea('${t.id}')">
+    <div class="kanban-card-title">${t.titulo}</div>
+    ${t.cliente_nombre?`<div class="kanban-card-sub">${t.cliente_nombre}</div>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+      ${badgeEstado(t.prioridad||'Normal')}
+      ${t.fecha_limite?`<span style="font-size:10px;color:var(--muted);">${t.fecha_limite}</span>`:''}
+    </div>
+  </div>`;
+}
+
+function drawerTarea(id){
+  const t=G.tareas.find(x=>String(x.id)===String(id));
+  if(!t) return;
+  openDrawer(t.titulo,`
+    <div style="margin-bottom:1.5rem;">
+      <div style="font-size:18px;font-family:'Cormorant Garamond',serif;">${t.titulo}</div>
+      <div style="margin-top:6px;">${badgeEstado(t.estado)} ${badgeEstado(t.prioridad||'Normal')}</div>
+    </div>
+    ${t.descripcion?`<div style="font-size:13px;line-height:1.6;margin-bottom:1rem;">${t.descripcion}</div>`:''}
+    ${dr('Cliente',t.cliente_nombre)}${dr('Fecha límite',t.fecha_limite)}${dr('Creada',t.fecha_creacion)}
+    <div class="sec-title-sm">Mover a</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;">
+      ${['Pendiente','En curso','Cerrado'].filter(e=>e!==t.estado).map(e=>`<button class="btn btn-ghost btn-sm" onclick="moverTarea('${t.id}','${e}')">${e}</button>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:0.5rem;">
+      <button class="btn btn-danger btn-sm" onclick="confirmarDeleteTarea('${t.id}')">Eliminar</button>
+    </div>`);
+}
+
+async function moverTarea(id, estado){
+  await api('updateTareaEstado',{id,estado});
+  toast('Tarea movida a '+estado);
+  closeDrawer(); await loadData(); renderTareas();
+}
+
+function modalNuevaTarea(estadoDefault='Pendiente'){
+  openModal('Nueva tarea',`
+    <div class="field"><label>Título *</label><input type="text" id="t_titulo" placeholder="Descripción de la tarea"></div>
+    <div class="field"><label>Descripción</label><textarea id="t_desc" placeholder="Detalle adicional..."></textarea></div>
+    <div class="grid2">
+      <div class="field"><label>Cliente (opcional)</label><select id="t_cli"><option value="">— Sin cliente —</option>${G.clientes.map(cl=>`<option value="${cl.id}">${cl.nombre}</option>`).join('')}</select></div>
+      <div class="field"><label>Estado</label><select id="t_estado"><option value="Pendiente"${estadoDefault==='Pendiente'?' selected':''}>Pendiente</option><option value="En curso"${estadoDefault==='En curso'?' selected':''}>En curso</option></select></div>
+      <div class="field"><label>Prioridad</label><select id="t_prior"><option value="Normal">Normal</option><option value="Alta">Alta</option><option value="Baja">Baja</option></select></div>
+      <div class="field"><label>Fecha límite</label><input type="date" id="t_fecha"></div>
+    </div>`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="guardarTarea()">Guardar</button>`);
+}
+
+async function guardarTarea(){
+  const titulo=gv('t_titulo');
+  if(!titulo){ toast('El título es obligatorio'); return; }
+  const cliId=gv('t_cli');
+  const cli=G.clientes.find(x=>String(x.id)===cliId);
+  const t={titulo,descripcion:gv('t_desc'),cliente_id:cliId,cliente_nombre:cli?.nombre||'',estado:gv('t_estado'),prioridad:gv('t_prior'),fecha_limite:gv('t_fecha')};
+  await api('saveTarea',{t}); toast('Tarea guardada');
+  closeModal(); await loadData(); renderTareas();
+}
+
+async function confirmarDeleteTarea(id){
+  if(!confirm('¿Eliminar esta tarea?')) return;
+  await api('deleteTarea',{id});
+  toast('Tarea eliminada'); closeDrawer();
+  await loadData(); renderTareas();
+}
+
+// ── CONFIGURACIÓN ────────────────────────────────────────────────
+function renderConfiguracion(){
+  const c = document.getElementById('content');
+  const e = G.estudio||{};
+
+  // Partidas: default + personalizadas
+  const partidasExtra = (G.config['partidas_presupuesto']||[]).map(x=>x.valor);
+  const todasPartidas = [...new Set([...PARTIDAS_DEFAULT, ...partidasExtra])];
+
+  // Desplegables (excluyendo partidas_presupuesto que va aparte)
+  const clavesDesplegables = {
+    'tipo_cliente':'Tipos de cliente',
+    'forma_pago':'Formas de pago',
+    'como_conocio':'Cómo nos conoció',
+    'estado_proyecto':'Estados de proyecto',
+    'cat_proveedor':'Categorías de proveedor',
+    'plazo_proveedor':'Plazos de entrega'
+  };
+
+  let desplegablesHTML = '';
+  Object.entries(clavesDesplegables).forEach(([clave,titulo])=>{
+    const items = G.config[clave]||[];
+    const itemsHTML = items.length
+      ? items.map(item=>`<div class="config-item"><span>${item.valor}</span><button class="config-item-edit" onclick="modalEditConfig(${item.fila},'${item.valor}')">Editar</button><button class="config-item-del" onclick="deleteConfig(${item.fila})">×</button></div>`).join('')
+      : '<div style="font-size:12px;color:var(--muted);padding:4px 0;">Sin valores.</div>';
+    desplegablesHTML += `<div style="margin-bottom:1.25rem;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">${titulo}</div><button class="btn btn-ghost btn-sm" onclick="modalAddConfig('${clave}','${titulo}')">+ Añadir</button></div>${itemsHTML}</div>`;
+  });
+
+  // Partidas personalizadas HTML
+  const partidasExtrasHTML = partidasExtra.length
+    ? partidasExtra.map(item=>{
+        const it = (G.config['partidas_presupuesto']||[]).find(x=>x.valor===item);
+        return it ? `<div class="config-item"><span>${item}</span><button class="config-item-edit" onclick="modalEditConfig(${it.fila},'${item}')">Editar</button><button class="config-item-del" onclick="deleteConfig(${it.fila})">×</button></div>` : '';
+      }).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:4px 0;">Solo las partidas por defecto. Añade partidas personalizadas aquí.</div>';
+
+  const partidasDefaultHTML = PARTIDAS_DEFAULT.map(p=>`<div style="padding:5px 0;border-bottom:1px solid var(--warm);font-size:12px;color:var(--muted);">${p}</div>`).join('');
+
+  // Opciones del selector del catálogo
+  const partidasOpts = todasPartidas.map(p=>`<option value="${p}">${p}</option>`).join('');
+
+  c.innerHTML = `
+    <div class="page-header"><div class="page-title">Configuración</div></div>
+
+    <!-- DATOS DEL ESTUDIO -->
+    <div class="card card-gold" style="margin-bottom:1.5rem;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);margin-bottom:1rem;letter-spacing:0.05em;">Datos del estudio</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;">Aparecerán en todos los documentos generados.</div>
+      <div class="grid2">
+        <div class="field"><label>Nombre / Razón social</label><input type="text" id="es_nombre" value="${e.nombre||'LATON studio'}"></div>
+        <div class="field"><label>CIF</label><input type="text" id="es_cif" value="${e.cif||'76088698Y'}"></div>
+        <div class="field"><label>Teléfono</label><input type="text" id="es_tel" value="${e.tel||'+34 692 819 091'}"></div>
+        <div class="field"><label>Email</label><input type="text" id="es_email" value="${e.email||''}"></div>
+        <div class="field"><label>Web</label><input type="text" id="es_web" value="${e.web||''}"></div>
+        <div class="field"><label>Dirección fiscal</label><input type="text" id="es_dir" value="${e.dir||''}"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+        <button class="btn btn-gold" onclick="guardarDatosEstudio()">Guardar datos del estudio</button>
+      </div>
+    </div>
+
+    <!-- PARTIDAS -->
+    <div class="card card-gold" style="margin-bottom:1.5rem;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);margin-bottom:0.5rem;letter-spacing:0.05em;">Partidas de presupuesto</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;">Las partidas por defecto siempre están disponibles. Aquí puedes añadir partidas personalizadas adicionales.</div>
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Por defecto</div>
+        ${partidasDefaultHTML}
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;">Personalizadas</div>
+          <button class="btn btn-ghost btn-sm" onclick="modalAddConfig('partidas_presupuesto','Partidas de presupuesto')">+ Añadir partida</button>
+        </div>
+        ${partidasExtrasHTML}
+      </div>
+    </div>
+
+    <!-- CATÁLOGO DE DESCRIPCIONES -->
+    <div class="card card-gold" style="margin-bottom:1.5rem;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);margin-bottom:0.5rem;letter-spacing:0.05em;">Catálogo de descripciones</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;">Selecciona una partida y añade sus descripciones habituales. En el presupuesto usa el botón ≡ de cada línea para seleccionarlas.</div>
+      <div style="display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+        <select id="cat_partida_sel" onchange="onCatPartidaChange()"
+          style="font-family:'DM Mono',monospace;font-size:13px;padding:7px 10px;border:var(--border);border-radius:var(--radius);background:var(--cream);outline:none;flex:1;min-width:200px;">
+          ${partidasOpts}
+        </select>
+        <button class="btn btn-gold btn-sm" onclick="modalAddDescripcion()">+ Añadir descripción</button>
+      </div>
+      <div id="lista_descripciones">${renderListaDescripciones(todasPartidas[0]||'')}</div>
+    </div>
+
+    <!-- DESPLEGABLES -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div style="font-size:14px;font-weight:500;margin-bottom:0.5rem;">Opciones de desplegables</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:1.25rem;">Gestiona las opciones que aparecen en los formularios de la app.</div>
+      ${desplegablesHTML}
+    </div>`;
+}
+
+// ── Catálogo de descripciones ────────────────────────────────────
+function slugify(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_'); }
+
+function renderListaDescripciones(partida){
+  const clave = 'desc_'+slugify(partida);
+  const items = G.config[clave]||[];
+  if(!items.length) return `<div style="font-size:12px;color:var(--muted);padding:8px 0;">Sin descripciones para esta partida. Añade la primera con el botón de arriba.</div>`;
+  return items.map(item=>{
+    const parts = String(item.valor||'').split('||');
+    return `<div class="config-item">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;">${parts[0]||item.valor}</div>
+        ${parts[1]?`<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;">${parts[1]}</div>`:''}
+      </div>
+      <button class="config-item-edit" onclick="modalEditDescripcion(${item.fila},'${String(item.valor||'').replace(/'/g,"\\'")}')">Editar</button>
+      <button class="config-item-del" onclick="deleteConfig(${item.fila})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function onCatPartidaChange(){
+  const sel = document.getElementById('cat_partida_sel');
+  document.getElementById('lista_descripciones').innerHTML = renderListaDescripciones(sel.value);
+}
+
+function getCatPartidaActual(){
+  return document.getElementById('cat_partida_sel')?.value||PARTIDAS_DEFAULT[0];
+}
+
+function modalAddDescripcion(){
+  const partida = getCatPartidaActual();
+  openModal('Nueva descripción — '+partida,`
+    <div class="field"><label>Título corto *</label><input type="text" id="desc_titulo" placeholder="Ej. Demolición tabique simple"></div>
+    <div class="field"><label>Descripción técnica completa</label><textarea id="desc_texto" placeholder="Ej. Demolición controlada de tabique de ladrillo simple, incluso p/p de retirada a residuos y limpieza." style="min-height:80px;"></textarea></div>`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="saveDescripcion('${slugify(partida)}')">Guardar</button>`);
+  setTimeout(()=>document.getElementById('desc_titulo')?.focus(),100);
+}
+
+function modalEditDescripcion(fila, valorActual){
+  const parts = String(valorActual||'').split('||');
+  openModal('Editar descripción',`
+    <div class="field"><label>Título corto *</label><input type="text" id="desc_edit_titulo" value="${parts[0]||''}"></div>
+    <div class="field"><label>Descripción técnica</label><textarea id="desc_edit_texto" style="min-height:80px;">${parts[1]||''}</textarea></div>`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="updateDescripcion(${fila})">Guardar</button>`);
+}
+
+async function saveDescripcion(clave){
+  const titulo = gv('desc_titulo');
+  if(!titulo){ toast('El título es obligatorio'); return; }
+  const texto = gv('desc_texto');
+  const valor = texto ? titulo+'||'+texto : titulo;
+  await api('saveConfigItem',{clave:'desc_'+clave, valor});
+  toast('Descripción guardada'); closeModal();
+  await loadConfig();
+  const partida = document.getElementById('cat_partida_sel')?.value||'';
+  const el = document.getElementById('lista_descripciones');
+  if(el) el.innerHTML = renderListaDescripciones(partida);
+}
+
+async function updateDescripcion(fila){
+  const titulo = gv('desc_edit_titulo');
+  if(!titulo){ toast('El título es obligatorio'); return; }
+  const texto = gv('desc_edit_texto');
+  const valor = texto ? titulo+'||'+texto : titulo;
+  await api('updateConfigItem',{fila,valor});
+  toast('Descripción actualizada'); closeModal();
+  await loadConfig();
+  const partida = document.getElementById('cat_partida_sel')?.value||'';
+  const el = document.getElementById('lista_descripciones');
+  if(el) el.innerHTML = renderListaDescripciones(partida);
+}
+
+// ── Datos del estudio ────────────────────────────────────────────
+async function guardarDatosEstudio(){
+  const campos = ['nombre','cif','tel','email','web','dir'];
+  for(const campo of campos){
+    const val = document.getElementById('es_'+campo)?.value||'';
+    const clave = 'estudio_'+campo;
+    const existing = G.config[clave];
+    if(existing && existing.length){
+      await api('updateConfigItem',{fila:existing[0].fila, valor:val});
+    } else {
+      await api('saveConfigItem',{clave, valor:val});
+    }
+  }
+  toast('Datos del estudio guardados');
+  await loadConfig();
+}
+
+function modalAddConfig(clave, titulo){
+  openModal('Añadir a '+titulo,`
+    <div class="field"><label>Nuevo valor</label><input type="text" id="cfg_val" placeholder="Escribe el nuevo valor"></div>`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="saveConfigItem('${clave}')">Añadir</button>`);
+  setTimeout(()=>document.getElementById('cfg_val')?.focus(),100);
+}
+
+function modalEditConfig(fila, valorActual){
+  openModal('Editar valor',`
+    <div class="field"><label>Valor</label><input type="text" id="cfg_edit_val" value="${valorActual}"></div>`,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="updateConfigItem(${fila})">Guardar</button>`);
+}
+
+async function saveConfigItem(clave){
+  const valor=gv('cfg_val');
+  if(!valor){ toast('Introduce un valor'); return; }
+  await api('saveConfigItem',{clave,valor});
+  toast('Valor añadido'); closeModal();
+  await loadConfig(); renderConfiguracion();
+}
+
+async function updateConfigItem(fila){
+  const valor=gv('cfg_edit_val');
+  if(!valor){ toast('Introduce un valor'); return; }
+  await api('updateConfigItem',{fila,valor});
+  toast('Valor actualizado'); closeModal();
+  await loadConfig(); renderConfiguracion();
+}
+
+async function deleteConfig(fila){
+  if(!confirm('¿Eliminar este valor?')) return;
+  await api('deleteConfigItem',{fila});
+  toast('Valor eliminado');
+  await loadConfig(); renderConfiguracion();
+}
+
+// ── UTILIDADES FECHA ─────────────────────────────────────────────
+function fmtFecha(v){
+  if(!v) return '—';
+  // Si ya es dd/mm/yyyy devolver tal cual
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(String(v))) return v;
+  // Si es ISO o timestamp
+  try {
+    const d = new Date(v);
+    if(isNaN(d)) return String(v);
+    return d.toLocaleDateString('es-ES');
+  } catch(e){ return String(v); }
+}
+
+// ── EDICIÓN DE PRESUPUESTOS ───────────────────────────────────────
+async function cargarPresupuesto(id){
+  closeDrawer();
+  toast('Cargando presupuesto...');
+  // Obtener líneas desde Sheets
+  const r = await apiGet('getLineasPresupuesto&id='+id, true);
+  const p = G.presupuestos.find(x=>String(x.id)===String(id));
+  if(!p){ toast('Presupuesto no encontrado'); return; }
+
+  // Reconstruir presState desde las líneas guardadas
+  presState = { partidas:[], clienteId: String(p.cliente_id), clienteNombre: p.cliente_nombre, editandoId: String(id) };
+  _presId = 1;
+
+  const lineas = (r && !r.error) ? r : [];
+
+  // Agrupar líneas guardadas por nombre de partida
+  const lineasPorPartida = {};
+  lineas.forEach(l => {
+    const key = l.partida || 'Sin nombre';
+    if(!lineasPorPartida[key]) lineasPorPartida[key] = [];
+    lineasPorPartida[key].push(l);
+  });
+
+  // Cargar siempre las partidas por defecto
+  // Si una partida tiene líneas guardadas, las carga; si no, aparece vacía
+  PARTIDAS_DEFAULT.forEach(nombre => {
+    const pid = npid();
+    const sid = npid();
+    const linsGuardadas = lineasPorPartida[nombre] || [];
+    const lineasArr = linsGuardadas.map(l => ({
+      id: npid(), desc: l.desc||'', detalle: l.detalle||'',
+      ud: l.ud||'UD', cant: numP(l.cant), pProv: numP(l.pProv),
+      margen: numP(l.margen), iva: numP(l.iva), url: String(l.url||'')
+    }));
+    presState.partidas.push({ id:pid, nombre, collapsed:false,
+      subs:[{ id:sid, nombre:'', lineas:lineasArr }]
+    });
+    // Marcar como procesada
+    delete lineasPorPartida[nombre];
+  });
+
+  // Si había partidas personalizadas no incluidas en las default, añadirlas también
+  Object.entries(lineasPorPartida).forEach(([nombre, lins]) => {
+    const pid = npid();
+    const sid = npid();
+    const lineasArr = lins.map(l => ({
+      id: npid(), desc: l.desc||'', detalle: l.detalle||'',
+      ud: l.ud||'UD', cant: numP(l.cant), pProv: numP(l.pProv),
+      margen: numP(l.margen), iva: numP(l.iva), url: String(l.url||'')
+    }));
+    presState.partidas.push({ id:pid, nombre, collapsed:false,
+      subs:[{ id:sid, nombre:'', lineas:lineasArr }]
+    });
+  });
+
+  const c = document.getElementById('content');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-presupuestos')?.classList.add('active');
+  presRenderEditor(p);
+}
+
+function presRenderEditor(p){
+  const c = document.getElementById('content');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-presupuestos')?.classList.add('active');
+
+  // Generar HTML del editor directamente sin tocar presState.partidas
+  const cli = G.clientes.find(x=>String(x.id)===String(presState.clienteId));
+  const fechaVal = p?.fecha ? (String(p.fecha).includes('T') ? p.fecha.split('T')[0] : p.fecha) : new Date().toISOString().split('T')[0];
+
+  c.innerHTML = `
+    <div class="page-header">
+      <button class="btn btn-ghost btn-sm" onclick="renderPresupuestos()">← Volver</button>
+      <div class="page-title">Editar presupuesto</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="exportPresPDF()">Exportar PDF</button>
+        <button class="btn btn-ghost" onclick="exportListaCompra()">Lista de compra</button>
+        <button class="btn btn-ghost" onclick="modalDocProveedor()">Doc. proveedor</button>
+        <button class="btn btn-gold" onclick="guardarPresupuesto()">Guardar cambios</button>
+      </div>
+    </div>
+    <div class="card card-gold" style="margin-bottom:1rem;">
+      <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">Datos del proyecto</div>
+      <div class="grid3">
+        <div class="field"><label>Nº Presupuesto</label><input type="text" id="pr_num" value="${p?.numero||''}"></div>
+        <div class="field"><label>Fecha</label><input type="date" id="pr_fecha" value="${fechaVal}"></div>
+        <div class="field"><label>Validez (días)</label><input type="number" id="pr_validez" value="${p?.validez||30}"></div>
+        <div class="field"><label>Cliente</label>
+          <select id="pr_cli" onchange="autocompletarCliente(this.value)">
+            <option value="">— Sin cliente —</option>
+            ${G.clientes.map(cl=>`<option value="${cl.id}"${String(cl.id)===String(p?.cliente_id)?'selected':''}>${cl.nombre}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Proyecto / descripción</label><input type="text" id="pr_proyecto" value="${p?.proyecto||''}"></div>
+        <div class="field"><label>Dirección obra</label><input type="text" id="pr_dir" value="${p?.direccion||''}"></div>
+        <div class="field full"><label>Forma de pago</label><input type="text" id="pr_pago" value="${p?.forma_pago||''}"></div>
+        <div class="field"><label>Estado</label>
+          <select id="pr_estado">
+            ${['Borrador','Enviado','Aprobado','Rechazado'].map(e=>`<option value="${e}"${e===(p?.estado||'Borrador')?'selected':''}>${e}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="presPartidas"></div>
+    <div style="margin:10px 0;"><button class="btn btn-ink btn-sm" onclick="modalAnadirPartida()">+ Añadir partida</button></div>
+    <div class="card card-gold" style="margin-top:1rem;">
+      <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">Resumen</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;" id="presResumen">
+        <thead><tr style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">
+          <th style="padding:5px 8px;text-align:left;font-weight:400;">Partida</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:400;">Sin IVA</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:400;">Con IVA</th>
+        </tr></thead>
+        <tbody id="presResumenBody"></tbody>
+      </table>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--muted);">Fee del estudio</span>
+        <input type="number" id="pr_feePct" min="0" max="100" step="0.5" placeholder="%" style="width:65px;padding:4px 8px;border:var(--border);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:12px;background:var(--cream);outline:none;">
+        <span style="font-size:11px;color:var(--muted);">% ó</span>
+        <input type="number" id="pr_feeFixed" min="0" step="0.01" placeholder="€ fijo" style="width:90px;padding:4px 8px;border:var(--border);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:12px;background:var(--cream);outline:none;">
+        <span style="font-size:11px;color:var(--muted);">€</span>
+      </div>
+    </div>`;
+
+  presRenderPartidas();
+  presRecalcTotals();
+}
+
+async function exportPresPDFGuardado(id){
+  const r = await apiGet('getLineasPresupuesto&id='+id, true);
+  const p = G.presupuestos.find(x=>String(x.id)===String(id));
+  if(!p) return;
+  const lineas = (r && !r.error) ? r : [];
+  // Reconstruir partidas temporalmente para el PDF
+  const partidasMap = {};
+  lineas.forEach(l=>{
+    const key = l.partida||'Sin nombre';
+    if(!partidasMap[key]) partidasMap[key]=[];
+    partidasMap[key].push(l);
+  });
+  const partidasPDF = Object.entries(partidasMap).map(([nombre,lins])=>({
+    nombre, lineas: lins.map(l=>({desc:l.desc,detalle:l.detalle,ud:l.ud,cant:numP(l.cant),pProv:numP(l.pProv),margen:numP(l.margen),iva:numP(l.iva)}))
+  }));
+  const fechaFmt = fmtFecha(p.fecha);
+  const pago = p.forma_pago||'';
+  const validez = p.validez||30;
+  let totSin=0, totCon=0;
+  const pHTML = partidasPDF.map((pt,pi)=>{
+    if(!pt.lineas.length) return '';
+    const pN=String(pi+1).padStart(2,'0');
+    const lHTML = pt.lineas.map((l,li)=>{
+      const c=presCalcL(l);
+      totSin+=c.tCli; totCon+=c.tCliIva;
+      return`<tr>
+        <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;color:#888;">${pN}.${li+1}</td>
+        <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;"><div>${l.desc||'—'}</div>${l.detalle?`<div style="font-size:8px;color:#999;">${l.detalle}</div>`:''}</td>
+        <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:center;">${l.ud}</td>
+        <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;">${numP(l.cant).toLocaleString('es-ES')}</td>
+        <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN(c.pCli)}</td>
+        <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN(c.pCliIva)}</td>
+        <td style="padding:3px 6px;border-bottom:1px solid #e2dbd0;text-align:right;white-space:nowrap;">${fmtN(c.tCliIva)}</td>
+      </tr>`;
+    }).join('');
+    const stCli=pt.lineas.reduce((a,l)=>a+presCalcL(l).tCli,0);
+    const stCon=pt.lineas.reduce((a,l)=>a+presCalcL(l).tCliIva,0);
+    return`<div style="background:#1c1a18;color:#f8f5f0;padding:5px 8px;font-size:9px;letter-spacing:0.08em;margin:1rem 0 0;">${pN}. ${pt.nombre}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:9px;">
+      <thead><tr>
+        <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:left;width:40px;">Cód.</th>
+        <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:left;">Descripción</th>
+        <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:center;">UD</th>
+        <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">Cant.</th>
+        <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">P.Unit s/IVA</th>
+        <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">P.Unit c/IVA</th>
+        <th style="background:#e8dcc8;padding:3px 6px;font-size:7px;color:#8a8278;font-weight:400;text-align:right;">Total c/IVA</th>
+      </tr></thead>
+      <tbody>${lHTML}
+      <tr><td colspan="5" style="padding:3px 6px;background:#f8f5f0;border-top:1px solid #1c1a18;"></td>
+        <td style="padding:3px 6px;background:#f8f5f0;font-size:8px;color:#8a8278;">Subtotal s/IVA</td>
+        <td style="padding:3px 6px;background:#f8f5f0;text-align:right;">${fmtN(stCli)}</td></tr>
+      <tr><td colspan="5" style="padding:3px 6px;background:#f8f5f0;"></td>
+        <td style="padding:3px 6px;background:#f8f5f0;font-size:8px;color:#8a8278;">Subtotal c/IVA</td>
+        <td style="padding:3px 6px;background:#f8f5f0;text-align:right;">${fmtN(stCon)}</td></tr>
+      </tbody>
+    </table>`;
+  }).join('');
+  const feeImp = numP(p.fee)||0;
+  const grand = numP(p.total_con_iva)||totCon+feeImp;
+  const content=`<div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;letter-spacing:0.25em;color:#1c1a18;">LATON <em style="color:#b8974a;font-style:normal;">Studio</em></div>
+  <div style="font-size:9px;color:#888;letter-spacing:0.1em;margin-bottom:1.5rem;">PRESUPUESTO</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:1.2rem 0;padding-bottom:1.2rem;border-bottom:2px solid #1c1a18;">
+    <div><div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Cliente</div>
+      <div style="font-size:12px;">${p.cliente_nombre||'—'}</div>
+      ${p.direccion?`<div style="font-size:10px;color:#888;margin-top:3px;">${p.direccion}</div>`:''}
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Nº Presupuesto</div><div style="font-size:12px;">${p.numero||'—'}</div>
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 3px;">Fecha</div><div style="font-size:12px;">${fechaFmt}</div>
+      <div style="font-size:8px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 3px;">Válido</div><div style="font-size:12px;">${validez} días desde emisión</div>
+    </div>
+  </div>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:14px;color:#555;margin-bottom:1.5rem;font-style:italic;">${p.proyecto||'—'}</div>
+  ${pHTML}
+  <div style="margin-top:2rem;border-top:2px solid #1c1a18;padding-top:1rem;">
+    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #e2dbd0;"><span>Total obra sin IVA</span><span>${fmtN(numP(p.total_sin_iva))}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #e2dbd0;"><span>Total obra con IVA</span><span>${fmtN(grand)}</span></div>
+    ${feeImp>0?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #e2dbd0;"><span>Fee del estudio</span><span>${fmtN(feeImp)}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;background:#1c1a18;color:#f8f5f0;padding:9px 10px;margin-top:6px;font-size:13px;"><span>TOTAL PRESUPUESTO</span><span>${fmtN(grand)}</span></div>
+  </div>
+  ${pago?`<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:9px;color:#8a8278;line-height:1.8;"><strong>Forma de pago:</strong> ${pago}</div>`:''}
+  <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:8px;color:#bbb;text-align:center;">Presupuesto válido ${validez} días · Laton Studio</div>`;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto — Laton Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Mono',monospace;font-size:11px;color:#1c1a18;padding:2cm;background:#fff;}@media print{body{padding:1.5cm;}@page{margin:1cm;size:A4;}}</style>
+  </head><body>${content}</body></html>`);
+  w.document.close(); setTimeout(()=>w.print(),800);
+}
+
+// ── CARGA DE DATOS ───────────────────────────────────────────────
+async function loadConfig(){
+  const r=await apiGet('getConfig');
+  if(r&&!r.error) G.config=r;
+  // Cargar datos del estudio desde config
+  G.estudio = {
+    nombre: (G.config['estudio_nombre']||[{valor:'LATON studio'}])[0]?.valor||'LATON studio',
+    cif:    (G.config['estudio_cif']   ||[{valor:'76088698Y'}])[0]?.valor||'76088698Y',
+    tel:    (G.config['estudio_tel']   ||[{valor:'+34 692 819 091'}])[0]?.valor||'+34 692 819 091',
+    email:  (G.config['estudio_email'] ||[{valor:''}])[0]?.valor||'',
+    web:    (G.config['estudio_web']   ||[{valor:''}])[0]?.valor||'',
+    dir:    (G.config['estudio_dir']   ||[{valor:''}])[0]?.valor||'',
+  };
+}
+
+async function loadData(){
+  const [cli,prov,pres,tar]=await Promise.all([
+    apiGet('getClientes'),apiGet('getProveedores'),
+    apiGet('getPresupuestos'),apiGet('getTareas')
+  ]);
+  if(cli&&!cli.error) G.clientes=cli;
+  if(prov&&!prov.error) G.proveedores=prov;
+  if(pres&&!pres.error) G.presupuestos=pres;
+  if(tar&&!tar.error) G.tareas=tar;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+async function init(){
+  document.getElementById('content').innerHTML='<div class="loading">Conectando con la base de datos...</div>';
+  await loadConfig();
+  await loadData();
+  showPage('dashboard');
+}
+
+init();
+</script>
+</body>
+</html>
