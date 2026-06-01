@@ -201,24 +201,63 @@ table.data-table{width:100%;border-collapse:collapse;font-size:12px;}
 
 <div class="toast" id="toast"></div>
 
-<script>
-const API = 'https://script.google.com/macros/s/AKfycbyLFXuPrpPnuSvRstkC-9-kw9dwlHDrzEL4P0eEUus8Bo74Qn8sx5T766IwDicJ9fmC/exec';
+<script type="module">
+// ── Firebase ─────────────────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBs5zbRmSp0s5y1napG4DB4qXMeIjycl-g",
+  authDomain: "laton-app-database.firebaseapp.com",
+  projectId: "laton-app-database",
+  storageBucket: "laton-app-database.firebasestorage.app",
+  messagingSenderId: "979520939759",
+  appId: "1:979520939759:web:659c7f3b9eff0ebf1d1d1a"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
 
 // ── Estado global ────────────────────────────────────────────────
 let G = { clientes:[], proveedores:[], presupuestos:[], tareas:[], config:{}, estudio:{} };
 
-// ── API ──────────────────────────────────────────────────────────
-async function api(action, data){
+// ── Helpers Firestore ────────────────────────────────────────────
+const colRef = (name) => collection(db, name);
+
+async function fbGetAll(colName){
   try {
-    const res = await fetch(API, {method:'POST', body:JSON.stringify({action,...data})});
-    return await res.json();
-  } catch(e){ toast('Error de conexión'); return {error:e.message}; }
+    const snap = await getDocs(colRef(colName));
+    return snap.docs.map(d => ({id: d.id, ...d.data()}));
+  } catch(e){ toast('Error de conexión'); return []; }
 }
-async function apiGet(action){
+
+async function fbAdd(colName, data){
   try {
-    const res = await fetch(API+'?action='+action);
-    return await res.json();
-  } catch(e){ toast('Error de conexión'); return {error:e.message}; }
+    const ref = await addDoc(colRef(colName), {...data, _ts: Date.now()});
+    return { ok: true, id: ref.id };
+  } catch(e){ toast('Error al guardar'); return {error:e.message}; }
+}
+
+async function fbUpdate(colName, id, data){
+  try {
+    await updateDoc(doc(db, colName, String(id)), data);
+    return { ok: true };
+  } catch(e){ toast('Error al actualizar'); return {error:e.message}; }
+}
+
+async function fbDelete(colName, id){
+  try {
+    await deleteDoc(doc(db, colName, String(id)));
+    return { ok: true };
+  } catch(e){ toast('Error al eliminar'); return {error:e.message}; }
+}
+
+async function fbGetWhere(colName, field, value){
+  try {
+    const q = query(colRef(colName), where(field, '==', value));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({id: d.id, ...d.data()}));
+  } catch(e){ return []; }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -423,15 +462,15 @@ async function guardarCliente(id=''){
   const nombre=gv('f_nombre');
   if(!nombre){ toast('El nombre es obligatorio'); return; }
   const cl={nombre,tipo:gv('f_tipo'),ref:gv('f_ref'),contacto:gv('f_contacto'),telefono:gv('f_telefono'),email:gv('f_email'),direccion:gv('f_direccion'),cp:gv('f_cp'),ciudad:gv('f_ciudad'),nif:gv('f_nif'),razon_social:gv('f_razon_social'),forma_pago:gv('f_forma_pago'),iban:gv('f_iban'),dir_obra:gv('f_dir_obra'),tipo_inmueble:gv('f_tipo_inmueble'),superficie:gv('f_superficie'),como_conocio:gv('f_como_conocio'),presupuesto_estimado:gv('f_presupuesto_estimado'),preferencias:gv('f_preferencias'),notas:gv('f_notas')};
-  if(id){ cl.id=id; await api('updateCliente',{cliente:cl}); toast('Cliente actualizado'); }
-  else { await api('saveCliente',{cliente:cl}); toast('Cliente guardado'); }
+  if(id){ await fbUpdate('clientes', id, cl); toast('Cliente actualizado'); }
+  else { await fbAdd('clientes', cl); toast('Cliente guardado'); }
   closeModal(); closeDrawer();
   await loadData(); renderClientes();
 }
 
 async function confirmarDeleteCliente(id){
   if(!confirm('¿Eliminar este cliente?')) return;
-  await api('deleteCliente',{id});
+  await fbDelete('clientes', id);
   toast('Cliente eliminado'); closeDrawer();
   await loadData(); renderClientes();
 }
@@ -535,15 +574,15 @@ async function guardarProveedor(id=''){
   const nombre=gv('p_nombre');
   if(!nombre){ toast('El nombre es obligatorio'); return; }
   const p={nombre,cat:gv('p_cat'),urgencia:gv('p_urgencia'),contacto:gv('p_contacto'),tel:gv('p_tel'),pago:gv('p_pago'),descuento:gv('p_descuento'),web:gv('p_web'),notas:gv('p_notas')};
-  if(id){ p.id=id; await api('updateProveedor',{p}); toast('Proveedor actualizado'); }
-  else { await api('saveProveedor',{p}); toast('Proveedor guardado'); }
+  if(id){ await fbUpdate('proveedores', id, p); toast('Proveedor actualizado'); }
+  else { await fbAdd('proveedores', p); toast('Proveedor guardado'); }
   closeModal(); closeDrawer();
   await loadData(); renderProveedores();
 }
 
 async function confirmarDeleteProveedor(id){
   if(!confirm('¿Eliminar este proveedor?')) return;
-  await api('deleteProveedor',{id});
+  await fbDelete('proveedores', id);
   toast('Proveedor eliminado'); closeDrawer();
   await loadData(); renderProveedores();
 }
@@ -643,13 +682,15 @@ async function cambiarEstadoPresupuesto(id, estado){
   if(document.getElementById('tbodyPres')) filterPresupuestos();
 
   // Guardar en Sheets en segundo plano
-  await api('updatePresupuestoEstado',{id, estado});
+  await fbUpdate('presupuestos', id, {estado});
   toast('Estado actualizado');
 }
 
 async function confirmarDeletePres(id){
   if(!confirm('¿Eliminar este presupuesto?')) return;
-  await api('deletePresupuesto',{id});
+  const lineasPres = await fbGetWhere('presupuesto_lineas','presupuesto_id',id);
+  await Promise.all(lineasPres.map(l=>fbDelete('presupuesto_lineas',l.id)));
+  await fbDelete('presupuestos', id);
   toast('Presupuesto eliminado'); closeDrawer();
   await loadData(); renderPresupuestos();
 }
@@ -1079,8 +1120,22 @@ function presBuildPDFContent(){
       <div style="display:flex;justify-content:space-between;background:#1c1a18;color:#f8f5f0;padding:9px 10px;margin-top:6px;font-size:13px;"><span>TOTAL PRESUPUESTO</span><span>${fmtN(grand)}</span></div>
     </div>
     ${pago?`<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:9px;color:#8a8278;line-height:1.8;"><strong>Forma de pago:</strong> ${pago}</div>`:''}
-    ${nota?`<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:9px;color:#8a8278;line-height:1.8;">NOTA: ${nota}</div>`:''}
-    <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:8px;color:#bbb;text-align:center;">Presupuesto válido ${validez} días desde la fecha de emisión · Laton Studio</div>`;
+    ${nota?`<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:9px;color:#8a8278;line-height:1.8;"><strong>NOTA:</strong> ${nota}</div>`:''}
+    <div style="margin-top:3rem;display:grid;grid-template-columns:1fr 1fr;gap:4rem;">
+      <div style="text-align:center;">
+        <div style="height:2rem;"></div>
+        <div style="border-top:1px solid #1c1a18;padding-top:8px;"></div>
+        <div style="font-size:9px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;">Laton Studio</div>
+        <div style="font-size:8px;color:#aaa;margin-top:3px;">${estudio.nombre} · CIF ${estudio.cif}</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="height:2rem;"></div>
+        <div style="border-top:1px solid #1c1a18;padding-top:8px;"></div>
+        <div style="font-size:9px;color:#8a8278;text-transform:uppercase;letter-spacing:0.1em;">Conforme cliente</div>
+        <div style="font-size:8px;color:#aaa;margin-top:3px;">${cliente||'—'}</div>
+      </div>
+    </div>
+    <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e0d8cc;font-size:8px;color:#bbb;text-align:center;">Presupuesto válido ${validez} días desde la fecha de emisión · ${estudio.nombre}</div>`;
 }
 
 function modalDocProveedor(){
@@ -1561,13 +1616,21 @@ async function guardarPresupuesto(){
   const pres={numero,cliente_id:cli_id,cliente_nombre:cli?.nombre||'',proyecto,direccion:document.getElementById('pr_dir')?.value||'',fecha:document.getElementById('pr_fecha')?.value||'',validez:document.getElementById('pr_validez')?.value||'30',forma_pago:document.getElementById('pr_pago')?.value||'',fee:feeImp,total_sin_iva:totSinIva,total_con_iva:totConIva,estado:document.getElementById('pr_estado')?.value||'Borrador',lineas};
   const btn=event.target; btn.disabled=true; btn.textContent='Guardando...';
   let r;
+  const lineas = pres.lineas || [];
+  delete pres.lineas;
   if(presState.editandoId){
-    // Borrar líneas antiguas y guardar nuevas
-    await api('deleteLineasPresupuesto',{id:presState.editandoId});
-    pres.id = presState.editandoId;
-    r = await api('updatePresupuesto',{p:pres});
+    // Borrar líneas antiguas
+    const oldLineas = await fbGetWhere('presupuesto_lineas','presupuesto_id',presState.editandoId);
+    await Promise.all(oldLineas.map(l=>fbDelete('presupuesto_lineas',l.id)));
+    await fbUpdate('presupuestos', presState.editandoId, pres);
+    r = {ok:true};
   } else {
-    r = await api('savePresupuesto',{p:pres});
+    r = await fbAdd('presupuestos', pres);
+    presState.editandoId = r.id;
+  }
+  // Guardar líneas
+  if(lineas.length && presState.editandoId){
+    await Promise.all(lineas.map(l=>fbAdd('presupuesto_lineas',{...l,presupuesto_id:presState.editandoId})));
   }
   if(r&&r.ok){ toast(presState.editandoId?'Presupuesto actualizado':'Presupuesto guardado'); await loadData(); renderPresupuestos(); }
   else { toast('Error al guardar'); btn.disabled=false; btn.textContent=presState.editandoId?'Guardar cambios':'Guardar'; }
@@ -1633,7 +1696,7 @@ function drawerTarea(id){
 }
 
 async function moverTarea(id, estado){
-  await api('updateTareaEstado',{id,estado});
+  await fbUpdate('tareas', id, {estado});
   toast('Tarea movida a '+estado);
   closeDrawer(); await loadData(); renderTareas();
 }
@@ -1658,13 +1721,13 @@ async function guardarTarea(){
   const cliId=gv('t_cli');
   const cli=G.clientes.find(x=>String(x.id)===cliId);
   const t={titulo,descripcion:gv('t_desc'),cliente_id:cliId,cliente_nombre:cli?.nombre||'',estado:gv('t_estado'),prioridad:gv('t_prior'),fecha_limite:gv('t_fecha')};
-  await api('saveTarea',{t}); toast('Tarea guardada');
+  await fbAdd('tareas', t); toast('Tarea guardada');
   closeModal(); await loadData(); renderTareas();
 }
 
 async function confirmarDeleteTarea(id){
   if(!confirm('¿Eliminar esta tarea?')) return;
-  await api('deleteTarea',{id});
+  await fbDelete('tareas', id);
   toast('Tarea eliminada'); closeDrawer();
   await loadData(); renderTareas();
 }
@@ -1822,7 +1885,7 @@ async function saveDescripcion(clave){
   if(!titulo){ toast('El título es obligatorio'); return; }
   const texto = gv('desc_texto');
   const valor = texto ? titulo+'||'+texto : titulo;
-  await api('saveConfigItem',{clave:'desc_'+clave, valor});
+  await fbAdd('config',{clave:'desc_'+clave, valor});
   toast('Descripción guardada'); closeModal();
   await loadConfig();
   const partida = document.getElementById('cat_partida_sel')?.value||'';
@@ -1835,7 +1898,7 @@ async function updateDescripcion(fila){
   if(!titulo){ toast('El título es obligatorio'); return; }
   const texto = gv('desc_edit_texto');
   const valor = texto ? titulo+'||'+texto : titulo;
-  await api('updateConfigItem',{fila,valor});
+  await fbUpdate('config', fila, {valor});
   toast('Descripción actualizada'); closeModal();
   await loadConfig();
   const partida = document.getElementById('cat_partida_sel')?.value||'';
@@ -1851,9 +1914,9 @@ async function guardarDatosEstudio(){
     const clave = 'estudio_'+campo;
     const existing = G.config[clave];
     if(existing && existing.length){
-      await api('updateConfigItem',{fila:existing[0].fila, valor:val});
+      await fbUpdate('config', existing[0].fila, {valor:val});
     } else {
-      await api('saveConfigItem',{clave, valor:val});
+      await fbAdd('config', {clave, valor:val});
     }
   }
   toast('Datos del estudio guardados');
@@ -1878,7 +1941,7 @@ function modalEditConfig(fila, valorActual){
 async function saveConfigItem(clave){
   const valor=gv('cfg_val');
   if(!valor){ toast('Introduce un valor'); return; }
-  await api('saveConfigItem',{clave,valor});
+  await fbAdd('config',{clave,valor});
   toast('Valor añadido'); closeModal();
   await loadConfig(); renderConfiguracion();
 }
@@ -1886,14 +1949,14 @@ async function saveConfigItem(clave){
 async function updateConfigItem(fila){
   const valor=gv('cfg_edit_val');
   if(!valor){ toast('Introduce un valor'); return; }
-  await api('updateConfigItem',{fila,valor});
+  await fbUpdate('config', fila, {valor});
   toast('Valor actualizado'); closeModal();
   await loadConfig(); renderConfiguracion();
 }
 
 async function deleteConfig(fila){
   if(!confirm('¿Eliminar este valor?')) return;
-  await api('deleteConfigItem',{fila});
+  await fbDelete('config', fila);
   toast('Valor eliminado');
   await loadConfig(); renderConfiguracion();
 }
@@ -1916,7 +1979,8 @@ async function cargarPresupuesto(id){
   closeDrawer();
   toast('Cargando presupuesto...');
   // Obtener líneas desde Sheets
-  const r = await apiGet('getLineasPresupuesto&id='+id, true);
+  const lineasRaw = await fbGetWhere('presupuesto_lineas','presupuesto_id',id);
+  const r = lineasRaw;
   const p = G.presupuestos.find(x=>String(x.id)===String(id));
   if(!p){ toast('Presupuesto no encontrado'); return; }
 
@@ -2040,7 +2104,7 @@ function presRenderEditor(p){
 }
 
 async function exportPresPDFGuardado(id){
-  const r = await apiGet('getLineasPresupuesto&id='+id, true);
+  const r = await fbGetWhere('presupuesto_lineas','presupuesto_id',id);
   const p = G.presupuestos.find(x=>String(x.id)===String(id));
   if(!p) return;
   const lineas = (r && !r.error) ? r : [];
@@ -2132,9 +2196,16 @@ async function exportPresPDFGuardado(id){
 
 // ── CARGA DE DATOS ───────────────────────────────────────────────
 async function loadConfig(){
-  const r=await apiGet('getConfig');
-  if(r&&!r.error) G.config=r;
-  // Cargar datos del estudio desde config
+  const items = await fbGetAll('config');
+  // Reconstruir G.config con el mismo formato que antes {clave: [{valor, id}]}
+  G.config = {};
+  items.forEach(item => {
+    const clave = item.clave;
+    if(!clave) return;
+    if(!G.config[clave]) G.config[clave] = [];
+    G.config[clave].push({ valor: item.valor, fila: item.id });
+  });
+  // Cargar datos del estudio
   G.estudio = {
     nombre: (G.config['estudio_nombre']||[{valor:'LATON studio'}])[0]?.valor||'LATON studio',
     cif:    (G.config['estudio_cif']   ||[{valor:'76088698Y'}])[0]?.valor||'76088698Y',
@@ -2146,14 +2217,16 @@ async function loadConfig(){
 }
 
 async function loadData(){
-  const [cli,prov,pres,tar]=await Promise.all([
-    apiGet('getClientes'),apiGet('getProveedores'),
-    apiGet('getPresupuestos'),apiGet('getTareas')
+  const [cli,prov,pres,tar] = await Promise.all([
+    fbGetAll('clientes'),
+    fbGetAll('proveedores'),
+    fbGetAll('presupuestos'),
+    fbGetAll('tareas')
   ]);
-  if(cli&&!cli.error) G.clientes=cli;
-  if(prov&&!prov.error) G.proveedores=prov;
-  if(pres&&!pres.error) G.presupuestos=pres;
-  if(tar&&!tar.error) G.tareas=tar;
+  G.clientes   = cli;
+  G.proveedores = prov;
+  G.presupuestos = pres;
+  G.tareas     = tar;
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
