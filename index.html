@@ -201,63 +201,105 @@ table.data-table{width:100%;border-collapse:collapse;font-size:12px;}
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
+<script>
 // ── Firebase ─────────────────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBs5zbRmSp0s5y1napG4DB4qXMeIjycl-g",
-  authDomain: "laton-app-database.firebaseapp.com",
-  projectId: "laton-app-database",
-  storageBucket: "laton-app-database.firebasestorage.app",
-  messagingSenderId: "979520939759",
-  appId: "1:979520939759:web:659c7f3b9eff0ebf1d1d1a"
-};
-
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
+// ── Firebase REST API ────────────────────────────────────────────
+const FB_BASE = "https://firestore.googleapis.com/v1/projects/laton-app-database/databases/(default)/documents";
+const FB_KEY  = "AIzaSyBs5zbRmSp0s5y1napG4DB4qXMeIjycl-g";
 
 // ── Estado global ────────────────────────────────────────────────
 let G = { clientes:[], proveedores:[], presupuestos:[], tareas:[], config:{}, estudio:{} };
 
-// ── Helpers Firestore ────────────────────────────────────────────
-const colRef = (name) => collection(db, name);
-
-async function fbGetAll(colName){
-  try {
-    const snap = await getDocs(colRef(colName));
-    return snap.docs.map(d => ({id: d.id, ...d.data()}));
-  } catch(e){ toast('Error de conexión'); return []; }
+// Convierte documento Firestore a objeto JS plano
+function fsToObj(doc){
+  const id = doc.name.split('/').pop();
+  const obj = {id};
+  if(!doc.fields) return obj;
+  for(const [k,v] of Object.entries(doc.fields)){
+    if(v.stringValue !== undefined) obj[k] = v.stringValue;
+    else if(v.integerValue !== undefined) obj[k] = Number(v.integerValue);
+    else if(v.doubleValue !== undefined) obj[k] = Number(v.doubleValue);
+    else if(v.booleanValue !== undefined) obj[k] = v.booleanValue;
+    else if(v.nullValue !== undefined) obj[k] = null;
+    else obj[k] = JSON.stringify(v);
+  }
+  return obj;
 }
 
-async function fbAdd(colName, data){
-  try {
-    const ref = await addDoc(colRef(colName), {...data, _ts: Date.now()});
-    return { ok: true, id: ref.id };
-  } catch(e){ toast('Error al guardar'); return {error:e.message}; }
+// Convierte objeto JS a formato Firestore
+function objToFs(data){
+  const fields = {};
+  for(const [k,v] of Object.entries(data)){
+    if(v === null || v === undefined) fields[k] = {nullValue: null};
+    else if(typeof v === 'boolean') fields[k] = {booleanValue: v};
+    else if(typeof v === 'number') fields[k] = {doubleValue: v};
+    else fields[k] = {stringValue: String(v)};
+  }
+  return {fields};
 }
 
-async function fbUpdate(colName, id, data){
-  try {
-    await updateDoc(doc(db, colName, String(id)), data);
-    return { ok: true };
-  } catch(e){ toast('Error al actualizar'); return {error:e.message}; }
+async function fbGetAll(col){
+  try{
+    const r = await fetch(`${FB_BASE}/${col}?key=${FB_KEY}&pageSize=500`);
+    const d = await r.json();
+    if(!d.documents) return [];
+    return d.documents.map(fsToObj);
+  }catch(e){ toast('Error de conexión'); return []; }
 }
 
-async function fbDelete(colName, id){
-  try {
-    await deleteDoc(doc(db, colName, String(id)));
-    return { ok: true };
-  } catch(e){ toast('Error al eliminar'); return {error:e.message}; }
+async function fbAdd(col, data){
+  try{
+    const r = await fetch(`${FB_BASE}/${col}?key=${FB_KEY}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(objToFs({...data, _ts: String(Date.now())}))
+    });
+    const d = await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return {ok:true, id: d.name.split('/').pop()};
+  }catch(e){ toast('Error al guardar'); return {error:e.message}; }
 }
 
-async function fbGetWhere(colName, field, value){
-  try {
-    const q = query(colRef(colName), where(field, '==', value));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({id: d.id, ...d.data()}));
-  } catch(e){ return []; }
+async function fbUpdate(col, id, data){
+  try{
+    const fields = Object.keys(data).join(',');
+    const r = await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}&updateMask.fieldPaths=${fields}`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(objToFs(data))
+    });
+    const d = await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return {ok:true};
+  }catch(e){ toast('Error al actualizar'); return {error:e.message}; }
+}
+
+async function fbDelete(col, id){
+  try{
+    await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}`, {method:'DELETE'});
+    return {ok:true};
+  }catch(e){ toast('Error al eliminar'); return {error:e.message}; }
+}
+
+async function fbGetWhere(col, field, value){
+  try{
+    const body = {
+      structuredQuery: {
+        from: [{collectionId: col}],
+        where: {
+          fieldFilter: {
+            field: {fieldPath: field},
+            op: 'EQUAL',
+            value: {stringValue: String(value)}
+          }
+        }
+      }
+    };
+    const r = await fetch(`${FB_BASE}:runQuery?key=${FB_KEY}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    return d.filter(x=>x.document).map(x=>fsToObj(x.document));
+  }catch(e){ return []; }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -2235,48 +2277,6 @@ async function init(){
   showPage('dashboard');
 }
 
-// Exponer funciones globales (necesario por type="module")
-const globalFns = [
-  'showPage','openModal','closeModal','openDrawer','closeDrawer',
-  'filterClientes','modalNuevoCliente','modalEditarCliente','guardarCliente','confirmarDeleteCliente','drawerCliente',
-  'filterProveedores','modalNuevoProveedor','modalEditarProveedor','guardarProveedor','confirmarDeleteProveedor','drawerProveedor',
-  'filterPresupuestos','drawerPresupuesto','confirmarDeletePres','abrirNuevoPresupuesto','cargarPresupuesto',
-  'guardarPresupuesto','exportPresPDF','exportPresPDFGuardado','previewPresPDF','exportListaCompra','generarListaCompra',
-  'modalDocProveedor','exportDocProveedor','toggleTodosChk',
-  'renderTareas','modalNuevaTarea','guardarTarea','moverTarea','confirmarDeleteTarea','drawerTarea',
-  'renderConfiguracion','modalAddConfig','modalEditConfig','saveConfigItem','updateConfigItem','deleteConfig',
-  'guardarDatosEstudio','modalAddDescripcion','modalEditDescripcion','saveDescripcion','updateDescripcion',
-  'onCatPartidaChange','getCatPartidaActual','renderListaDescripciones',
-  'cambiarEstadoPresupuesto','togglePartida','togglePartidaPres',
-  'addPartidaPres','addLineaPres','removePartidaPres','removeLineaPres','presOnSelChange','presyncDesc','presRenderPartidas','presRecalcTotals','presRenderEditor',
-  'modalAnadirPartida','confirmarAnadirPartida','slugClave','abrirCatalogoDesc','aplicarDescripcion',
-  'onPresClienteChange','autocompletarCliente',
-  'presAddPartida','presDelLinea','presAddLinea',
-  'fmtFecha','badgeEstado','initials','colorFor',
-  'filterPresupuestos','exportDocProveedor'
-];
-
-// Asignar todas al objeto window
-[
-  showPage, openModal, closeModal, openDrawer, closeDrawer,
-  filterClientes, modalNuevoCliente, modalEditarCliente, guardarCliente, confirmarDeleteCliente, drawerCliente,
-  filterProveedores, modalNuevoProveedor, modalEditarProveedor, guardarProveedor, confirmarDeleteProveedor, drawerProveedor,
-  filterPresupuestos, drawerPresupuesto, confirmarDeletePres, abrirNuevoPresupuesto, cargarPresupuesto,
-  guardarPresupuesto, exportPresPDF, exportPresPDFGuardado, previewPresPDF, exportListaCompra, generarListaCompra,
-  modalDocProveedor, exportDocProveedor, toggleTodosChk,
-  renderTareas, modalNuevaTarea, guardarTarea, moverTarea, confirmarDeleteTarea, drawerTarea,
-  renderConfiguracion, modalAddConfig, modalEditConfig, saveConfigItem, updateConfigItem, deleteConfig,
-  guardarDatosEstudio, modalAddDescripcion, modalEditDescripcion, saveDescripcion, updateDescripcion,
-  onCatPartidaChange, getCatPartidaActual, renderListaDescripciones,
-  cambiarEstadoPresupuesto,
-  addPartidaPres, addLineaPres, removePartidaPres, removeLineaPres, presOnSelChange, presyncDesc,
-  presRenderPartidas, presRecalcTotals,
-  modalAnadirPartida, confirmarAnadirPartida, slugClave, abrirCatalogoDesc, aplicarDescripcion,
-  onPresClienteChange,
-  fmtFecha, badgeEstado
-].forEach(fn => {
-  if(typeof fn === 'function') window[fn.name] = fn;
-});
 
 init();
 </script>
