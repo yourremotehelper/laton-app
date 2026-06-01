@@ -1613,11 +1613,9 @@ async function guardarPresupuesto(){
   const feePct=numP(document.getElementById('pr_feePct')?.value||0);
   const feeFixed=numP(document.getElementById('pr_feeFixed')?.value||0);
   const feeImp=feePct>0?totSinIva*(feePct/100):feeFixed;
-  const pres={numero,cliente_id:cli_id,cliente_nombre:cli?.nombre||'',proyecto,direccion:document.getElementById('pr_dir')?.value||'',fecha:document.getElementById('pr_fecha')?.value||'',validez:document.getElementById('pr_validez')?.value||'30',forma_pago:document.getElementById('pr_pago')?.value||'',fee:feeImp,total_sin_iva:totSinIva,total_con_iva:totConIva,estado:document.getElementById('pr_estado')?.value||'Borrador',lineas};
+  const pres={numero,cliente_id:cli_id,cliente_nombre:cli?.nombre||'',proyecto,direccion:document.getElementById('pr_dir')?.value||'',fecha:document.getElementById('pr_fecha')?.value||'',validez:document.getElementById('pr_validez')?.value||'30',forma_pago:document.getElementById('pr_pago')?.value||'',fee:feeImp,total_sin_iva:totSinIva,total_con_iva:totConIva,estado:document.getElementById('pr_estado')?.value||'Borrador'};
   const btn=event.target; btn.disabled=true; btn.textContent='Guardando...';
   let r;
-  const lineas = pres.lineas || [];
-  delete pres.lineas;
   if(presState.editandoId){
     // Borrar líneas antiguas
     const oldLineas = await fbGetWhere('presupuesto_lineas','presupuesto_id',presState.editandoId);
@@ -2236,6 +2234,49 @@ async function init(){
   await loadData();
   showPage('dashboard');
 }
+
+// Exponer funciones globales (necesario por type="module")
+const globalFns = [
+  'showPage','openModal','closeModal','openDrawer','closeDrawer',
+  'filterClientes','modalNuevoCliente','modalEditarCliente','guardarCliente','confirmarDeleteCliente','drawerCliente',
+  'filterProveedores','modalNuevoProveedor','modalEditarProveedor','guardarProveedor','confirmarDeleteProveedor','drawerProveedor',
+  'filterPresupuestos','drawerPresupuesto','confirmarDeletePres','abrirNuevoPresupuesto','cargarPresupuesto',
+  'guardarPresupuesto','exportPresPDF','exportPresPDFGuardado','previewPresPDF','exportListaCompra','generarListaCompra',
+  'modalDocProveedor','exportDocProveedor','toggleTodosChk',
+  'renderTareas','modalNuevaTarea','guardarTarea','moverTarea','confirmarDeleteTarea','drawerTarea',
+  'renderConfiguracion','modalAddConfig','modalEditConfig','saveConfigItem','updateConfigItem','deleteConfig',
+  'guardarDatosEstudio','modalAddDescripcion','modalEditDescripcion','saveDescripcion','updateDescripcion',
+  'onCatPartidaChange','getCatPartidaActual','renderListaDescripciones',
+  'cambiarEstadoPresupuesto','togglePartida','togglePartidaPres',
+  'addPartidaPres','addLineaPres','removePartidaPres','removeLineaPres','presOnSelChange','presyncDesc','presRenderPartidas','presRecalcTotals','presRenderEditor',
+  'modalAnadirPartida','confirmarAnadirPartida','slugClave','abrirCatalogoDesc','aplicarDescripcion',
+  'onPresClienteChange','autocompletarCliente',
+  'presAddPartida','presDelLinea','presAddLinea',
+  'fmtFecha','badgeEstado','initials','colorFor',
+  'filterPresupuestos','exportDocProveedor'
+];
+
+// Asignar todas al objeto window
+[
+  showPage, openModal, closeModal, openDrawer, closeDrawer,
+  filterClientes, modalNuevoCliente, modalEditarCliente, guardarCliente, confirmarDeleteCliente, drawerCliente,
+  filterProveedores, modalNuevoProveedor, modalEditarProveedor, guardarProveedor, confirmarDeleteProveedor, drawerProveedor,
+  filterPresupuestos, drawerPresupuesto, confirmarDeletePres, abrirNuevoPresupuesto, cargarPresupuesto,
+  guardarPresupuesto, exportPresPDF, exportPresPDFGuardado, previewPresPDF, exportListaCompra, generarListaCompra,
+  modalDocProveedor, exportDocProveedor, toggleTodosChk,
+  renderTareas, modalNuevaTarea, guardarTarea, moverTarea, confirmarDeleteTarea, drawerTarea,
+  renderConfiguracion, modalAddConfig, modalEditConfig, saveConfigItem, updateConfigItem, deleteConfig,
+  guardarDatosEstudio, modalAddDescripcion, modalEditDescripcion, saveDescripcion, updateDescripcion,
+  onCatPartidaChange, getCatPartidaActual, renderListaDescripciones,
+  cambiarEstadoPresupuesto,
+  addPartidaPres, addLineaPres, removePartidaPres, removeLineaPres, presOnSelChange, presyncDesc,
+  presRenderPartidas, presRecalcTotals,
+  modalAnadirPartida, confirmarAnadirPartida, slugClave, abrirCatalogoDesc, aplicarDescripcion,
+  onPresClienteChange,
+  fmtFecha, badgeEstado
+].forEach(fn => {
+  if(typeof fn === 'function') window[fn.name] = fn;
+});
 
 init();
 </script>
