@@ -1668,9 +1668,11 @@ async function guardarPresupuesto(){
     r = await fbAdd('presupuestos', pres);
     presState.editandoId = r.id;
   }
-  // Guardar líneas
+  // Guardar líneas en orden secuencial
   if(lineas.length && presState.editandoId){
-    await Promise.all(lineas.map(l=>fbAdd('presupuesto_lineas',{...l,presupuesto_id:presState.editandoId})));
+    for(let i=0; i<lineas.length; i++){
+      await fbAdd('presupuesto_lineas',{...lineas[i], presupuesto_id:presState.editandoId, orden:i});
+    }
   }
   if(r&&r.ok){ toast(presState.editandoId?'Presupuesto actualizado':'Presupuesto guardado'); await loadData(); renderPresupuestos(); }
   else { toast('Error al guardar'); btn.disabled=false; btn.textContent=presState.editandoId?'Guardar cambios':'Guardar'; }
@@ -2020,7 +2022,7 @@ async function cargarPresupuesto(id){
   toast('Cargando presupuesto...');
   // Obtener líneas desde Sheets
   const lineasRaw = await fbGetWhere('presupuesto_lineas','presupuesto_id',id);
-  const r = lineasRaw;
+  const r = lineasRaw.sort((a,b)=>(+a.orden||0)-(+b.orden||0));
   const p = G.presupuestos.find(x=>String(x.id)===String(id));
   if(!p){ toast('Presupuesto no encontrado'); return; }
 
@@ -2144,7 +2146,8 @@ function presRenderEditor(p){
 }
 
 async function exportPresPDFGuardado(id){
-  const r = await fbGetWhere('presupuesto_lineas','presupuesto_id',id);
+  const lineasPDF = await fbGetWhere('presupuesto_lineas','presupuesto_id',id);
+  const r = lineasPDF.sort((a,b)=>(+a.orden||0)-(+b.orden||0));
   const p = G.presupuestos.find(x=>String(x.id)===String(id));
   if(!p) return;
   const lineas = (r && !r.error) ? r : [];
